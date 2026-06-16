@@ -82,10 +82,16 @@ export async function ensureDatabase() {
         CREATE TABLE IF NOT EXISTS sessions (
           id BIGSERIAL PRIMARY KEY,
           ign TEXT NOT NULL,
+          device_id TEXT NOT NULL DEFAULT '',
           current_index INTEGER NOT NULL DEFAULT 0,
           completed_at TIMESTAMPTZ,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
+      `);
+
+      await queryDb(`
+        ALTER TABLE sessions
+        ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT '';
       `);
 
       await queryDb(`
@@ -117,7 +123,7 @@ export function sendJson(res, statusCode, payload) {
 export function allowCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Client-Id');
   res.setHeader('Cache-Control', 'no-store');
 }
 
@@ -151,18 +157,30 @@ export async function getSession(sessionId) {
   return rows[0] ?? null;
 }
 
-export async function createSession(ign) {
+export async function createSession(ign, deviceId = '') {
   const { rows } = await queryDb(
-    'INSERT INTO sessions (ign) VALUES ($1) RETURNING id, ign, current_index;',
-    [ign]
+    'INSERT INTO sessions (ign, device_id) VALUES ($1, $2) RETURNING id, ign, device_id, current_index;',
+    [ign, deviceId]
   );
   return rows[0];
 }
 
-export async function saveRatings(sessionId, ratings) {
+export function getClientId(req) {
+  return String(req.headers['x-client-id'] ?? '').trim();
+}
+
+export function isSessionLockedToDevice(session, clientId) {
+  return Boolean(session?.device_id) && session.device_id !== clientId;
+}
+
+export async function saveRatings(sessionId, ratings, clientId = '') {
   const session = await getSession(sessionId);
   if (!session) {
     return { error: 'Session not found.', statusCode: 404 };
+  }
+
+  if (isSessionLockedToDevice(session, clientId)) {
+    return { error: 'This session belongs to a different device.', statusCode: 403 };
   }
 
   if (session.completed_at) {
@@ -191,6 +209,9 @@ export async function saveRatings(sessionId, ratings) {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
+    if (!session.device_id && clientId) {
+      await client.query('UPDATE sessions SET device_id = $1 WHERE id = $2;', [clientId, sessionId]);
+    }
     await client.query('DELETE FROM ratings WHERE session_id = $1 AND target_player = $2;', [sessionId, targetPlayer]);
     for (const entry of values) {
       await client.query(

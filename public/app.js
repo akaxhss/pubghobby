@@ -33,7 +33,9 @@ const API_BASE =
 
 const SESSION_STORAGE_KEY = 'tourney_rater_session';
 const DRAFT_STORAGE_KEY = 'tourney_rater_draft';
+const CLIENT_ID_STORAGE_KEY = 'tourney_rater_client_id';
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const clientId = getOrCreateClientId();
 
 const state = {
   sessionId: null,
@@ -169,6 +171,10 @@ function loadStoredSession() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data?.sessionId || !data?.expiresAt) return null;
+    if (data.clientId && data.clientId !== clientId) {
+      clearStoredSession();
+      return null;
+    }
     if (Date.now() > Number(data.expiresAt)) {
       clearStoredSession();
       return null;
@@ -187,6 +193,7 @@ function saveStoredSession(payload) {
     SESSION_STORAGE_KEY,
     JSON.stringify({
       ...payload,
+      clientId,
       expiresAt
     })
   );
@@ -194,6 +201,19 @@ function saveStoredSession(payload) {
 
 function clearStoredSession() {
   localStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
+function getOrCreateClientId() {
+  const existing = localStorage.getItem(CLIENT_ID_STORAGE_KEY);
+  if (existing) {
+    return existing;
+  }
+
+  const value =
+    window.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  localStorage.setItem(CLIENT_ID_STORAGE_KEY, value);
+  return value;
 }
 
 function loadDraftRatings() {
@@ -334,7 +354,8 @@ function showCurrentPlayer({ preserveDraft = false } = {}) {
 async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-Client-Id': clientId
     },
     ...options
   });
@@ -399,6 +420,7 @@ els.loginForm.addEventListener('submit', async (event) => {
     saveStoredSession({
       sessionId: data.sessionId,
       ign: data.ign,
+      clientId,
       viewIndex: data.currentIndex,
       expiresAt: state.sessionExpiresAt
     });
@@ -439,6 +461,7 @@ els.ratingForm.addEventListener('submit', async (event) => {
     saveStoredSession({
       sessionId: state.sessionId,
       ign: state.ign,
+      clientId,
       viewIndex: data.savedPlayer === getViewPlayer() ? data.currentIndex : state.viewIndex,
       expiresAt: state.sessionExpiresAt ?? undefined
     });

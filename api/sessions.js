@@ -2,6 +2,7 @@ import {
   allowCors,
   createSession,
   currentPlayerForIndex,
+  getClientId,
   ensureDatabase,
   respondIfDatabaseMissing,
   players,
@@ -33,10 +34,11 @@ export default async function handler(req, res) {
     return sendJson(res, 400, { error: 'IGN is required.' });
   }
 
-  const session = await createSession(ign);
+  const session = await createSession(ign, getClientId(req));
   return sendJson(res, 200, {
     sessionId: session.id,
     ign: session.ign,
+    clientId: session.device_id,
     currentIndex: session.current_index,
     currentPlayer: currentPlayerForIndex(session.current_index),
     totalPlayers: players.length

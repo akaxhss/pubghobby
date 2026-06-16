@@ -60,6 +60,7 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS sessions (
       id BIGSERIAL PRIMARY KEY,
       ign TEXT NOT NULL,
+      device_id TEXT NOT NULL DEFAULT '',
       current_index INTEGER NOT NULL DEFAULT 0,
       completed_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -74,6 +75,11 @@ async function initDb() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  await queryDb(`
+    ALTER TABLE sessions
+    ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT '';
+  `);
 }
 
 function sendJson(res, statusCode, payload) {
@@ -82,7 +88,7 @@ function sendJson(res, statusCode, payload) {
     'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
+    'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id'
   });
   res.end(JSON.stringify(payload));
 }
@@ -97,6 +103,14 @@ function sendText(res, statusCode, text, contentType = 'text/plain; charset=utf-
 
 function currentPlayerForIndex(index) {
   return players[index] ?? null;
+}
+
+function getClientId(req) {
+  return String(req.headers['x-client-id'] ?? '').trim();
+}
+
+function isSessionLockedToDevice(session, clientId) {
+  return Boolean(session?.device_id) && session.device_id !== clientId;
 }
 
 async function getSession(sessionId) {
@@ -141,7 +155,7 @@ async function handleApi(req, res, url) {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id'
     });
     res.end();
     return true;
@@ -158,15 +172,18 @@ async function handleApi(req, res, url) {
       return sendJson(res, 400, { error: 'IGN is required.' });
     }
 
+    const clientId = getClientId(req);
+
     const { rows } = await queryDb(
-      'INSERT INTO sessions (ign) VALUES ($1) RETURNING id, ign, current_index;',
-      [ign]
+      'INSERT INTO sessions (ign, device_id) VALUES ($1, $2) RETURNING id, ign, device_id, current_index;',
+      [ign, clientId]
     );
     const session = rows[0];
 
     return sendJson(res, 200, {
       sessionId: session.id,
       ign: session.ign,
+      clientId: session.device_id,
       currentIndex: session.current_index,
       currentPlayer: currentPlayerForIndex(session.current_index),
       totalPlayers: players.length
@@ -180,9 +197,13 @@ async function handleApi(req, res, url) {
   if (req.method === 'GET' && sessionMatch) {
     const session = await getSession(sessionMatch[1]);
     if (!session) return sendJson(res, 404, { error: 'Session not found.' });
+    if (isSessionLockedToDevice(session, getClientId(req))) {
+      return sendJson(res, 403, { error: 'This session belongs to a different device.' });
+    }
     return sendJson(res, 200, {
       sessionId: session.id,
       ign: session.ign,
+      clientId: session.device_id,
       currentIndex: session.current_index,
       completedAt: session.completed_at,
       currentPlayer: currentPlayerForIndex(session.current_index),
@@ -196,6 +217,9 @@ async function handleApi(req, res, url) {
     const session = await getSession(sessionId);
     if (!session) {
       return sendJson(res, 404, { error: 'Session not found.' });
+    }
+    if (isSessionLockedToDevice(session, getClientId(req))) {
+      return sendJson(res, 403, { error: 'This session belongs to a different device.' });
     }
 
     if (session.completed_at) {
@@ -220,6 +244,9 @@ async function handleApi(req, res, url) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      if (!session.device_id && getClientId(req)) {
+        await client.query('UPDATE sessions SET device_id = $1 WHERE id = $2;', [getClientId(req), sessionId]);
+      }
       for (const entry of values) {
         await client.query(
           'INSERT INTO ratings (session_id, target_player, skill, rating) VALUES ($1, $2, $3, $4);',
@@ -254,6 +281,9 @@ async function handleApi(req, res, url) {
   if (req.method === 'GET' && exportMatch) {
     const session = await getSession(exportMatch[1]);
     if (!session) return sendJson(res, 404, { error: 'Session not found.' });
+    if (isSessionLockedToDevice(session, getClientId(req))) {
+      return sendJson(res, 403, { error: 'This session belongs to a different device.' });
+    }
     const { rows } = await queryDb(
       `
       SELECT target_player, skill, rating, created_at
