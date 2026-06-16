@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tourney Rater Admin</title>
+    <link rel="stylesheet" href="./styles.css?v=4" />
+  </head>
+  <body class="admin-body">
+    <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <div class="eyebrow">Admin</div>
+          <h1>Tourney Rater Dashboard</h1>
+          <p class="admin-subtitle">Review sessions, inspect exports, and collect ratings data.</p>
+        </div>
+        <div class="admin-actions">
+          <a class="admin-link" href="./index.html">Open rater</a>
+          <button id="refreshButton" type="button">Refresh data</button>
+          <button id="downloadAllButton" type="button">Download all JSON</button>
+        </div>
+      </header>
+
+      <section class="admin-grid">
+        <div class="card stat-card">
+          <span class="step">Sessions</span>
+          <strong id="sessionCount">0</strong>
+        </div>
+        <div class="card stat-card">
+          <span class="step">Completed</span>
+          <strong id="completedCount">0</strong>
+        </div>
+        <div class="card stat-card">
+          <span class="step">Ratings</span>
+          <strong id="ratingCount">0</strong>
+        </div>
+        <div class="card stat-card">
+          <span class="step">Avg rating</span>
+          <strong id="averageRating">0</strong>
+        </div>
+      </section>
+
+      <section class="admin-layout">
+        <article class="card admin-panel">
+          <div class="card-head">
+            <div>
+              <span class="step">Sessions</span>
+              <h2>Session list</h2>
+            </div>
+          </div>
+          <div class="admin-list" id="sessionList"></div>
+        </article>
+
+        <article class="card admin-panel">
+          <div class="card-head">
+            <div>
+              <span class="step">Details</span>
+              <h2 id="detailTitle">Select a session</h2>
+            </div>
+            <button id="downloadSessionButton" type="button" disabled>Download session JSON</button>
+          </div>
+          <div class="admin-detail" id="sessionDetail">
+            <p class="muted">Choose a session to see its ratings.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <template id="sessionItemTemplate">
+      <button class="session-item" type="button">
+        <div class="session-item-top">
+          <strong class="session-ign"></strong>
+          <span class="session-status"></span>
+        </div>
+        <div class="session-meta-line"></div>
+      </button>
+    </template>
+
+    <script src="./admin.js?v=2" type="module"></script>
+  </body>
+</html>

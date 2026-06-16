@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tourney Rater</title>
+    <link rel="stylesheet" href="./styles.css?v=4" />
+  </head>
+  <body>
+    <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">
+          <div class="brand-mark">TR</div>
+          <div>
+            <div class="eyebrow">Tourney</div>
+            <h1>Player Rater</h1>
+          </div>
+        </div>
+        <p class="rail-copy">
+          Rate each player one at a time, five skills per player, each on a 10-star scale.
+        </p>
+        <div class="player-list" id="playerList"></div>
+      </aside>
+
+      <main class="main">
+        <section class="card login-card" id="loginCard">
+          <div class="card-head">
+            <span class="step">Step 1</span>
+            <h2>Enter your IGN</h2>
+          </div>
+          <p>Who is logging in to start this rating session?</p>
+          <form id="loginForm" class="login-form">
+            <input id="ignInput" name="ign" placeholder="Your in-game name" autocomplete="nickname" required />
+            <button type="submit">Start rating</button>
+          </form>
+        </section>
+
+        <section class="card survey-card hidden" id="surveyCard">
+          <div class="topline">
+            <div>
+              <span class="step">Step 2</span>
+              <h2 id="currentPlayerTitle">Player</h2>
+            </div>
+            <div class="meta" id="sessionMeta"></div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-labels">
+              <span id="progressText">0 of 0 completed</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar"><div id="progressFill"></div></div>
+          </div>
+
+          <form id="ratingForm" class="rating-form">
+            <div id="skillRows"></div>
+            <div class="actions">
+              <button type="submit" id="nextButton">Save & Next Player</button>
+            </div>
+          </form>
+
+          <div class="done hidden" id="donePanel">
+            <h3>All players saved</h3>
+            <p>The session is complete. Please hand the device to the next person.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="skillTemplate">
+      <div class="skill-row">
+        <div class="skill-label"></div>
+        <div class="stars" role="radiogroup"></div>
+      </div>
+    </template>
+
+    <script src="./app.js?v=4" type="module"></script>
+  </body>
+</html>
