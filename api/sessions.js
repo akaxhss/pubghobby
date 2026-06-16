@@ -3,6 +3,7 @@ import {
   createSession,
   currentPlayerForIndex,
   ensureDatabase,
+  respondIfDatabaseMissing,
   players,
   readJsonBody,
   sendJson
@@ -18,6 +19,10 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return sendJson(res, 405, { error: 'Method not allowed.' });
+  }
+
+  if (respondIfDatabaseMissing(res)) {
+    return;
   }
 
   await ensureDatabase();

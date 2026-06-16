@@ -1,4 +1,4 @@
-import { allowCors, ensureDatabase, players, sendJson } from './_lib.js';
+import { allowCors, hasDatabaseUrl, players, sendJson } from './_lib.js';
 
 export default async function handler(req, res) {
   allowCors(res);
@@ -12,6 +12,8 @@ export default async function handler(req, res) {
     return sendJson(res, 405, { error: 'Method not allowed.' });
   }
 
-  await ensureDatabase();
-  return sendJson(res, 200, { players });
+  return sendJson(res, 200, {
+    players,
+    databaseConfigured: hasDatabaseUrl()
+  });
 }

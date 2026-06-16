@@ -53,6 +53,24 @@ export function getPool() {
   return pool;
 }
 
+export function hasDatabaseUrl() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+export function getDatabaseConfigMessage() {
+  return hasDatabaseUrl() ? null : 'DATABASE_URL is not configured.';
+}
+
+export function respondIfDatabaseMissing(res) {
+  const message = getDatabaseConfigMessage();
+  if (!message) {
+    return false;
+  }
+
+  sendJson(res, 500, { error: message });
+  return true;
+}
+
 export async function queryDb(text, params = []) {
   return getPool().query(text, params);
 }

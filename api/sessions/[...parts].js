@@ -3,6 +3,7 @@ import {
   ensureDatabase,
   getSession,
   getSessionExport,
+  respondIfDatabaseMissing,
   players,
   readJsonBody,
   saveRatings,
@@ -15,6 +16,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
     return res.end();
+  }
+
+  if (respondIfDatabaseMissing(res)) {
+    return;
   }
 
   await ensureDatabase();

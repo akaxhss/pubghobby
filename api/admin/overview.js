@@ -1,4 +1,4 @@
-import { allowCors, ensureDatabase, getAdminOverview, sendJson } from '../_lib.js';
+import { allowCors, ensureDatabase, getAdminOverview, respondIfDatabaseMissing, sendJson } from '../_lib.js';
 
 export default async function handler(req, res) {
   allowCors(res);
@@ -10,6 +10,10 @@ export default async function handler(req, res) {
 
   if (req.method !== 'GET') {
     return sendJson(res, 405, { error: 'Method not allowed.' });
+  }
+
+  if (respondIfDatabaseMissing(res)) {
+    return;
   }
 
   await ensureDatabase();
