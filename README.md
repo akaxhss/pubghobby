@@ -25,3 +25,13 @@ Local development loads `.env` automatically, so put your `DATABASE_URL` there.
 ## Admin
 
 Open `http://localhost:3000/admin.html` to review sessions and export data.
+
+## Vercel Deploy
+
+1. Push this repo to GitHub.
+2. In Vercel, import the GitHub repo as a new project.
+3. Add `DATABASE_URL` in Project Settings > Environment Variables.
+4. Deploy the project.
+5. Open `/` for the rater and `/admin` for the dashboard.
+
+Vercel uses the `api/` folder for backend routes and `public/` for static files.

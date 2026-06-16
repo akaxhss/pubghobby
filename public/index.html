@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tourney Rater</title>
-    <link rel="stylesheet" href="./styles.css?v=4" />
+    <link rel="stylesheet" href="./styles.css?v=5" />
   </head>
   <body>
     <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
@@ -18,7 +18,7 @@
           </div>
         </div>
         <p class="rail-copy">
-          Rate each player one at a time, five skills per player, each on a 10-star scale.
+          Rate each player one at a time, five skills per player, each on a 10-point scale.
         </p>
         <div class="player-list" id="playerList"></div>
       </aside>
@@ -44,6 +44,7 @@
             </div>
             <div class="meta" id="sessionMeta"></div>
           </div>
+          <div class="session-banner" id="sessionBanner"></div>
 
           <div class="progress-wrap">
             <div class="progress-labels">
@@ -55,6 +56,10 @@
 
           <form id="ratingForm" class="rating-form">
             <div id="skillRows"></div>
+            <div class="review-actions">
+              <button type="button" id="prevButton" class="ghost-button">Previous Player</button>
+              <button type="button" id="nextReviewButton" class="ghost-button">Next Player</button>
+            </div>
             <div class="actions">
               <button type="submit" id="nextButton">Save & Next Player</button>
             </div>
@@ -75,6 +80,6 @@
       </div>
     </template>
 
-    <script src="./app.js?v=4" type="module"></script>
+    <script src="./app.js?v=9" type="module"></script>
   </body>
 </html>
