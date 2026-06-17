@@ -56,8 +56,6 @@ let completionTimer = null;
 const els = {
   loginCard: document.getElementById('loginCard'),
   surveyCard: document.getElementById('surveyCard'),
-  loginForm: document.getElementById('loginForm'),
-  ignInput: document.getElementById('ignInput'),
   playerList: document.getElementById('playerList'),
   currentPlayerTitle: document.getElementById('currentPlayerTitle'),
   sessionMeta: document.getElementById('sessionMeta'),
@@ -176,8 +174,7 @@ function getViewPlayer() {
 }
 
 function updateStartButtonState() {
-  const ign = els.ignInput.value.trim();
-  els.startRatingButton.disabled = !(ign && state.pendingSelfPlayer);
+  els.startRatingButton.disabled = !state.pendingSelfPlayer;
 }
 
 function setLoading(isLoading, title = 'Loading', copy = 'Please wait...') {
@@ -208,7 +205,6 @@ function resetToLogin() {
   state.currentPlayer = null;
   state.ratings = {};
   state.savedRatingsByPlayer = {};
-  els.loginForm.reset();
   els.sessionBanner.textContent = '';
   setLoading(false);
   renderIdPicker();
@@ -466,14 +462,6 @@ async function restorePersistedSession() {
   }
 }
 
-els.loginForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  updateStartButtonState();
-  if (!els.startRatingButton.disabled) {
-    els.startRatingButton.click();
-  }
-});
-
 els.ratingForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const missing = skills.filter((skill) => !state.ratings[skill]);
@@ -525,10 +513,6 @@ renderPlayerList();
 renderIdPicker();
 updateStartButtonState();
 
-els.ignInput.addEventListener('input', () => {
-  updateStartButtonState();
-});
-
 els.prevButton.addEventListener('click', () => {
   if (state.viewIndex <= 0) return;
   showPlayerAt(state.viewIndex - 1, { preserveDraft: true });
@@ -540,10 +524,9 @@ els.nextReviewButton.addEventListener('click', () => {
 });
 
 els.startRatingButton.addEventListener('click', async () => {
-  const ign = els.ignInput.value.trim();
   const selfPlayer = getPendingSelfPlayer();
-  if (!ign || !selfPlayer) {
-    alert('Please enter your IGN and select your ID.');
+  if (!selfPlayer) {
+    alert('Please select your ID.');
     return;
   }
 
@@ -552,7 +535,7 @@ els.startRatingButton.addEventListener('click', async () => {
   try {
     const data = await api('/api/sessions', {
       method: 'POST',
-      body: JSON.stringify({ ign, selfPlayer })
+      body: JSON.stringify({ ign: selfPlayer, selfPlayer })
     });
 
     state.sessionId = data.sessionId;
@@ -581,6 +564,16 @@ els.startRatingButton.addEventListener('click', async () => {
     setLoading(false);
     updateStartButtonState();
   }
+});
+
+// Keep Enter key from submitting a removed text form and simply use the selector state.
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter') return;
+  if (!state.pendingSelfPlayer) return;
+  const active = document.activeElement;
+  if (active && active.tagName === 'BUTTON') return;
+  event.preventDefault();
+  els.startRatingButton.click();
 });
 
 await restorePersistedSession();
