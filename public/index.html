@@ -18,7 +18,7 @@
           </div>
         </div>
         <p class="rail-copy">
-          Rate each player one at a time, five skills per player, each on a 10-point scale.
+          First select your own ID, then rate the other 14 players one at a time, five skills per player, each on a 10-point scale.
         </p>
         <div class="player-list" id="playerList"></div>
       </aside>
@@ -29,11 +29,17 @@
             <span class="step">Step 1</span>
             <h2>Enter your IGN</h2>
           </div>
-          <p>Who is logging in to start this rating session?</p>
+          <p>First type your IGN, then select your own ID from the list below.</p>
           <form id="loginForm" class="login-form">
             <input id="ignInput" name="ign" placeholder="Your in-game name" autocomplete="nickname" required />
-            <button type="submit">Start rating</button>
           </form>
+          <div class="id-picker-wrap">
+            <div class="id-picker-label">Select your ID</div>
+            <div class="id-picker" id="idPicker"></div>
+          </div>
+          <div class="login-actions">
+            <button type="button" id="startRatingButton" disabled>Start rating</button>
+          </div>
         </section>
 
         <section class="card survey-card hidden" id="surveyCard">
@@ -80,6 +86,6 @@
       </div>
     </template>
 
-    <script src="./app.js?v=9" type="module"></script>
+    <script src="./app.js?v=11" type="module"></script>
   </body>
 </html>

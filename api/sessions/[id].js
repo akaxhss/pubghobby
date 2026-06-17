@@ -3,6 +3,7 @@ import {
   ensureDatabase,
   getSession,
   getClientId,
+  getRosterPlayers,
   isSessionLockedToDevice,
   players,
   respondIfDatabaseMissing,
@@ -46,10 +47,11 @@ export default async function handler(req, res) {
     sessionId: session.id,
     ign: session.ign,
     clientId: session.device_id,
+    selfPlayer: session.self_player,
     currentIndex: session.current_index,
     completedAt: session.completed_at,
-    currentPlayer: players[session.current_index] ?? null,
-    totalPlayers: players.length
+    currentPlayer: getRosterPlayers(session.self_player)[session.current_index] ?? null,
+    totalPlayers: getRosterPlayers(session.self_player).length
   });
 }
 

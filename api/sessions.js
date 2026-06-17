@@ -3,9 +3,10 @@ import {
   createSession,
   currentPlayerForIndex,
   getClientId,
+  getRosterPlayers,
   ensureDatabase,
-  respondIfDatabaseMissing,
   players,
+  respondIfDatabaseMissing,
   readJsonBody,
   sendJson
 } from './_lib.js';
@@ -30,17 +31,23 @@ export default async function handler(req, res) {
 
   const body = await readJsonBody(req);
   const ign = String(body?.ign ?? '').trim();
+  const selfPlayer = String(body?.selfPlayer ?? '').trim();
   if (!ign) {
     return sendJson(res, 400, { error: 'IGN is required.' });
   }
 
-  const session = await createSession(ign, getClientId(req));
+  if (!selfPlayer || !players.includes(selfPlayer)) {
+    return sendJson(res, 400, { error: 'Please select your ID.' });
+  }
+
+  const session = await createSession(ign, getClientId(req), selfPlayer);
   return sendJson(res, 200, {
     sessionId: session.id,
     ign: session.ign,
     clientId: session.device_id,
+    selfPlayer: session.self_player,
     currentIndex: session.current_index,
-    currentPlayer: currentPlayerForIndex(session.current_index),
-    totalPlayers: players.length
+    currentPlayer: getRosterPlayers(session.self_player)[session.current_index] ?? null,
+    totalPlayers: getRosterPlayers(session.self_player).length
   });
 }

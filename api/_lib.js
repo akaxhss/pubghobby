@@ -83,6 +83,7 @@ export async function ensureDatabase() {
           id BIGSERIAL PRIMARY KEY,
           ign TEXT NOT NULL,
           device_id TEXT NOT NULL DEFAULT '',
+          self_player TEXT NOT NULL DEFAULT '',
           current_index INTEGER NOT NULL DEFAULT 0,
           completed_at TIMESTAMPTZ,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -92,6 +93,11 @@ export async function ensureDatabase() {
       await queryDb(`
         ALTER TABLE sessions
         ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT '';
+      `);
+
+      await queryDb(`
+        ALTER TABLE sessions
+        ADD COLUMN IF NOT EXISTS self_player TEXT NOT NULL DEFAULT '';
       `);
 
       await queryDb(`
@@ -112,6 +118,14 @@ export async function ensureDatabase() {
 
 export function currentPlayerForIndex(index) {
   return players[index] ?? null;
+}
+
+export function getRosterPlayers(selfPlayer = '') {
+  if (!selfPlayer) {
+    return players;
+  }
+
+  return players.filter((player) => player !== selfPlayer);
 }
 
 export function sendJson(res, statusCode, payload) {
@@ -157,10 +171,10 @@ export async function getSession(sessionId) {
   return rows[0] ?? null;
 }
 
-export async function createSession(ign, deviceId = '') {
+export async function createSession(ign, deviceId = '', selfPlayer = '') {
   const { rows } = await queryDb(
-    'INSERT INTO sessions (ign, device_id) VALUES ($1, $2) RETURNING id, ign, device_id, current_index;',
-    [ign, deviceId]
+    'INSERT INTO sessions (ign, device_id, self_player) VALUES ($1, $2, $3) RETURNING id, ign, device_id, self_player, current_index;',
+    [ign, deviceId, selfPlayer]
   );
   return rows[0];
 }
@@ -187,13 +201,18 @@ export async function saveRatings(sessionId, ratings, clientId = '') {
     return { error: 'This session is already complete.', statusCode: 400 };
   }
 
-  const targetPlayer = ratings?.targetPlayer ? String(ratings.targetPlayer).trim() : currentPlayerForIndex(session.current_index);
-  if (!targetPlayer || !players.includes(targetPlayer)) {
+  const rosterPlayers = getRosterPlayers(session.self_player);
+  const targetPlayer = ratings?.targetPlayer ? String(ratings.targetPlayer).trim() : rosterPlayers[session.current_index];
+  if (!targetPlayer || !rosterPlayers.includes(targetPlayer)) {
     return { error: 'Invalid target player.', statusCode: 400 };
   }
 
-  const isCurrentPlayer = targetPlayer === currentPlayerForIndex(session.current_index);
-  if (!isCurrentPlayer && session.current_index >= players.length) {
+  if (session.self_player && targetPlayer === session.self_player) {
+    return { error: 'You cannot rate your own ID.', statusCode: 400 };
+  }
+
+  const isCurrentPlayer = targetPlayer === rosterPlayers[session.current_index];
+  if (!isCurrentPlayer && session.current_index >= rosterPlayers.length) {
     return { error: 'No remaining players to rate.', statusCode: 400 };
   }
 
@@ -224,7 +243,7 @@ export async function saveRatings(sessionId, ratings, clientId = '') {
     let completeClause = '';
     if (isCurrentPlayer) {
       nextIndex = session.current_index + 1;
-      if (nextIndex >= players.length) {
+      if (nextIndex >= rosterPlayers.length) {
         completeClause = ', completed_at = NOW()';
       }
       await client.query(
@@ -241,13 +260,15 @@ export async function saveRatings(sessionId, ratings, clientId = '') {
   }
 
   const updated = await getSession(sessionId);
+  const updatedRoster = getRosterPlayers(updated?.self_player ?? session.self_player);
   return {
     saved: true,
     completed: Boolean(updated.completed_at),
-    nextPlayer: currentPlayerForIndex(updated.current_index),
+    nextPlayer: updatedRoster[updated.current_index] ?? null,
     currentIndex: updated.current_index,
-    totalPlayers: players.length,
-    savedPlayer: targetPlayer
+    totalPlayers: updatedRoster.length,
+    savedPlayer: targetPlayer,
+    selfPlayer: session.self_player
   };
 }
 

@@ -171,6 +171,43 @@ body {
   margin-top: 18px;
 }
 
+.login-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.id-picker-wrap {
+  margin-top: 18px;
+}
+
+.id-picker-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.id-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.id-chip {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+}
+
+.id-chip.selected {
+  border-color: rgba(110, 231, 255, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(110, 231, 255, 0.28);
+  background: rgba(76, 167, 255, 0.14);
+}
+
 .review-actions {
   display: flex;
   gap: 12px;

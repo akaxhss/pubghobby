@@ -1,6 +1,6 @@
 import { startMeshBackground } from './background.js';
 
-const players = [
+const allPlayers = [
   'Sensi',
   'Goodnight',
   'Skull',
@@ -41,6 +41,8 @@ const state = {
   sessionId: null,
   ign: '',
   sessionExpiresAt: null,
+  selfPlayer: '',
+  pendingSelfPlayer: '',
   currentIndex: 0,
   viewIndex: 0,
   completed: false,
@@ -65,15 +67,25 @@ const els = {
   skillRows: document.getElementById('skillRows'),
   ratingForm: document.getElementById('ratingForm'),
   sessionBanner: document.getElementById('sessionBanner'),
+  idPicker: document.getElementById('idPicker'),
+  startRatingButton: document.getElementById('startRatingButton'),
   prevButton: document.getElementById('prevButton'),
   nextReviewButton: document.getElementById('nextReviewButton'),
   nextButton: document.getElementById('nextButton'),
   donePanel: document.getElementById('donePanel')
 };
 
+function getRosterPlayers() {
+  if (!state.selfPlayer) {
+    return allPlayers;
+  }
+
+  return allPlayers.filter((player) => player !== state.selfPlayer);
+}
+
 function renderPlayerList() {
   els.playerList.innerHTML = '';
-  players.forEach((player, index) => {
+  getRosterPlayers().forEach((player, index) => {
     const row = document.createElement('div');
     row.className = 'player-pill';
     row.textContent = player;
@@ -87,6 +99,27 @@ function renderPlayerList() {
       row.classList.add('reviewing');
     }
     els.playerList.appendChild(row);
+  });
+}
+
+function renderIdPicker() {
+  els.idPicker.innerHTML = '';
+
+  allPlayers.forEach((player) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'id-chip';
+    button.textContent = player;
+    button.dataset.player = player;
+    if (state.pendingSelfPlayer === player) {
+      button.classList.add('selected');
+    }
+    button.addEventListener('click', () => {
+      state.pendingSelfPlayer = player;
+      renderIdPicker();
+      updateStartButtonState();
+    });
+    els.idPicker.appendChild(button);
   });
 }
 
@@ -136,7 +169,12 @@ function clearRatings() {
 }
 
 function getViewPlayer() {
-  return players[state.viewIndex] ?? null;
+  return getRosterPlayers()[state.viewIndex] ?? null;
+}
+
+function updateStartButtonState() {
+  const ign = els.ignInput.value.trim();
+  els.startRatingButton.disabled = !(ign && state.pendingSelfPlayer);
 }
 
 function setSurveyVisible(visible) {
@@ -152,6 +190,8 @@ function resetToLogin() {
   state.sessionId = null;
   state.ign = '';
   state.sessionExpiresAt = null;
+  state.selfPlayer = '';
+  state.pendingSelfPlayer = '';
   state.currentIndex = 0;
   state.viewIndex = 0;
   state.completed = false;
@@ -160,6 +200,8 @@ function resetToLogin() {
   state.savedRatingsByPlayer = {};
   els.loginForm.reset();
   els.sessionBanner.textContent = '';
+  renderIdPicker();
+  updateStartButtonState();
   clearRatings();
   renderPlayerList();
   setSurveyVisible(false);
@@ -201,6 +243,10 @@ function saveStoredSession(payload) {
 
 function clearStoredSession() {
   localStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
+function getPendingSelfPlayer() {
+  return state.pendingSelfPlayer || els.idPicker.querySelector('.id-chip.selected')?.dataset.player || '';
 }
 
 function getOrCreateClientId() {
@@ -271,23 +317,25 @@ function syncReviewUi() {
   const isReviewingSaved = state.viewIndex < state.currentIndex;
   state.currentPlayer = playerName;
   els.prevButton.disabled = state.viewIndex <= 0;
-  els.nextReviewButton.disabled = state.viewIndex >= state.currentIndex || state.completed;
+  els.nextReviewButton.disabled = state.viewIndex >= getRosterPlayers().length - 1 || state.completed;
   els.nextButton.textContent = isReviewingSaved ? 'Save Changes' : 'Save & Next Player';
-  els.sessionBanner.textContent = `This IGN is logged in: ${state.ign}`;
+  els.sessionBanner.textContent = `This IGN is logged in: ${state.ign} | Your ID: ${state.selfPlayer}`;
   els.currentPlayerTitle.textContent = playerName;
   els.sessionMeta.textContent = isReviewingSaved
-    ? `${state.ign} is reviewing ${state.viewIndex + 1} / ${players.length}`
-    : `${state.ign} is rating ${state.currentIndex + 1} / ${players.length}`;
+    ? `${state.ign} is reviewing ${state.viewIndex + 1} / ${getRosterPlayers().length}`
+    : `${state.ign} is rating ${state.currentIndex + 1} / ${getRosterPlayers().length}`;
   saveStoredSession({
     sessionId: state.sessionId,
     ign: state.ign,
+    selfPlayer: state.selfPlayer,
     viewIndex: state.viewIndex
   });
   renderPlayerList();
 }
 
 function showPlayerAt(index, { preserveDraft = false } = {}) {
-  state.viewIndex = Math.max(0, Math.min(index, players.length - 1));
+  const rosterPlayers = getRosterPlayers();
+  state.viewIndex = Math.max(0, Math.min(index, rosterPlayers.length - 1));
   const playerName = getViewPlayer();
   if (!playerName) return;
 
@@ -311,7 +359,7 @@ function buildSavedRatingsByPlayer(rows) {
 }
 
 function updateProgress() {
-  const total = players.length;
+  const total = getRosterPlayers().length;
   const completed = Math.min(state.currentIndex, total);
   const percent = Math.round((completed / total) * 100);
   els.progressText.textContent = `${completed} of ${total} completed`;
@@ -324,7 +372,7 @@ function showCurrentPlayer({ preserveDraft = false } = {}) {
   if (state.completed) {
     els.currentPlayerTitle.textContent = 'Session complete';
     els.sessionMeta.textContent = `${state.ign} finished the full roster`;
-    els.sessionBanner.textContent = `This IGN is logged in: ${state.ign}`;
+    els.sessionBanner.textContent = `This IGN is logged in: ${state.ign} | Your ID: ${state.selfPlayer}`;
     els.donePanel.classList.remove('hidden');
     els.ratingForm.classList.add('hidden');
     updateProgress();
@@ -342,9 +390,9 @@ function showCurrentPlayer({ preserveDraft = false } = {}) {
 
   els.donePanel.classList.add('hidden');
   els.ratingForm.classList.remove('hidden');
-  els.sessionBanner.textContent = `This IGN is logged in: ${state.ign}`;
+  els.sessionBanner.textContent = `This IGN is logged in: ${state.ign} | Your ID: ${state.selfPlayer}`;
   els.currentPlayerTitle.textContent = state.currentPlayer ?? 'Player';
-  els.sessionMeta.textContent = `${state.ign} is rating ${state.currentIndex + 1} / ${players.length}`;
+  els.sessionMeta.textContent = `${state.ign} is rating ${state.currentIndex + 1} / ${getRosterPlayers().length}`;
   updateProgress();
   if (!preserveDraft) {
     clearRatings();
@@ -376,6 +424,7 @@ async function restorePersistedSession() {
     state.sessionId = data.sessionId;
     state.ign = data.ign;
     state.sessionExpiresAt = stored.expiresAt;
+    state.selfPlayer = data.selfPlayer ?? stored.selfPlayer ?? '';
     state.currentIndex = data.currentIndex;
     state.currentPlayer = data.currentPlayer;
     state.completed = Boolean(data.completedAt);
@@ -383,7 +432,7 @@ async function restorePersistedSession() {
 
     setSurveyVisible(true);
     const storedViewIndex = Number.isInteger(stored.viewIndex) ? stored.viewIndex : state.currentIndex;
-    showPlayerAt(state.completed ? storedViewIndex : Math.min(storedViewIndex, state.currentIndex), {
+    showPlayerAt(state.completed ? storedViewIndex : Math.min(storedViewIndex, getRosterPlayers().length - 1), {
       preserveDraft: true
     });
 
@@ -393,6 +442,10 @@ async function restorePersistedSession() {
     if (draftForPlayer && Object.keys(draftForPlayer).length) {
       applyRatingsToUI(draftForPlayer);
     }
+
+    if (state.completed) {
+      showCurrentPlayer();
+    }
   } catch {
     clearStoredSession();
     clearDraftRatings();
@@ -401,38 +454,9 @@ async function restorePersistedSession() {
 
 els.loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const ign = els.ignInput.value.trim();
-  if (!ign) return;
-
-  els.nextButton.disabled = true;
-  try {
-    const data = await api('/api/sessions', {
-      method: 'POST',
-      body: JSON.stringify({ ign })
-    });
-
-    state.sessionId = data.sessionId;
-    state.ign = data.ign;
-    state.sessionExpiresAt = Date.now() + SESSION_TTL_MS;
-    state.currentIndex = data.currentIndex;
-    state.currentPlayer = data.currentPlayer;
-    state.completed = false;
-    saveStoredSession({
-      sessionId: data.sessionId,
-      ign: data.ign,
-      clientId,
-      viewIndex: data.currentIndex,
-      expiresAt: state.sessionExpiresAt
-    });
-    clearDraftRatings();
-
-    setSurveyVisible(true);
-    els.sessionBanner.textContent = `This IGN is logged in: ${state.ign}`;
-    showPlayerAt(state.currentIndex);
-  } catch (error) {
-    alert(error.message);
-  } finally {
-    els.nextButton.disabled = false;
+  updateStartButtonState();
+  if (!els.startRatingButton.disabled) {
+    els.startRatingButton.click();
   }
 });
 
@@ -461,11 +485,14 @@ els.ratingForm.addEventListener('submit', async (event) => {
     saveStoredSession({
       sessionId: state.sessionId,
       ign: state.ign,
+      selfPlayer: state.selfPlayer,
       clientId,
       viewIndex: data.savedPlayer === getViewPlayer() ? data.currentIndex : state.viewIndex,
       expiresAt: state.sessionExpiresAt ?? undefined
     });
-    if (data.savedPlayer === getViewPlayer()) {
+    if (data.completed) {
+      showCurrentPlayer();
+    } else if (data.savedPlayer === getViewPlayer()) {
       showPlayerAt(data.currentIndex);
     } else {
       showPlayerAt(state.viewIndex, { preserveDraft: true });
@@ -479,6 +506,12 @@ els.ratingForm.addEventListener('submit', async (event) => {
 
 renderSkillRows();
 renderPlayerList();
+renderIdPicker();
+updateStartButtonState();
+
+els.ignInput.addEventListener('input', () => {
+  updateStartButtonState();
+});
 
 els.prevButton.addEventListener('click', () => {
   if (state.viewIndex <= 0) return;
@@ -486,8 +519,50 @@ els.prevButton.addEventListener('click', () => {
 });
 
 els.nextReviewButton.addEventListener('click', () => {
-  if (state.viewIndex >= Math.min(state.currentIndex, players.length - 1)) return;
+  if (state.viewIndex >= getRosterPlayers().length - 1) return;
   showPlayerAt(state.viewIndex + 1, { preserveDraft: true });
+});
+
+els.startRatingButton.addEventListener('click', async () => {
+  const ign = els.ignInput.value.trim();
+  const selfPlayer = getPendingSelfPlayer();
+  if (!ign || !selfPlayer) {
+    alert('Please enter your IGN and select your ID.');
+    return;
+  }
+
+  els.startRatingButton.disabled = true;
+  try {
+    const data = await api('/api/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ ign, selfPlayer })
+    });
+
+    state.sessionId = data.sessionId;
+    state.ign = data.ign;
+    state.sessionExpiresAt = Date.now() + SESSION_TTL_MS;
+    state.selfPlayer = data.selfPlayer ?? selfPlayer;
+    state.currentIndex = data.currentIndex;
+    state.currentPlayer = data.currentPlayer;
+    state.completed = false;
+    saveStoredSession({
+      sessionId: data.sessionId,
+      ign: data.ign,
+      selfPlayer: state.selfPlayer,
+      clientId,
+      viewIndex: data.currentIndex,
+      expiresAt: state.sessionExpiresAt
+    });
+    clearDraftRatings();
+
+    setSurveyVisible(true);
+    els.sessionBanner.textContent = `This IGN is logged in: ${state.ign} | Your ID: ${state.selfPlayer}`;
+    showPlayerAt(state.currentIndex);
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    updateStartButtonState();
+  }
 });
 
 await restorePersistedSession();
