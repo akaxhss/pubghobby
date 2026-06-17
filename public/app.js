@@ -69,6 +69,9 @@ const els = {
   sessionBanner: document.getElementById('sessionBanner'),
   idPicker: document.getElementById('idPicker'),
   startRatingButton: document.getElementById('startRatingButton'),
+  loadingOverlay: document.getElementById('loadingOverlay'),
+  loadingTitle: document.getElementById('loadingTitle'),
+  loadingCopy: document.getElementById('loadingCopy'),
   prevButton: document.getElementById('prevButton'),
   nextReviewButton: document.getElementById('nextReviewButton'),
   nextButton: document.getElementById('nextButton'),
@@ -177,6 +180,13 @@ function updateStartButtonState() {
   els.startRatingButton.disabled = !(ign && state.pendingSelfPlayer);
 }
 
+function setLoading(isLoading, title = 'Loading', copy = 'Please wait...') {
+  els.loadingTitle.textContent = title;
+  els.loadingCopy.textContent = copy;
+  els.loadingOverlay.classList.toggle('hidden', !isLoading);
+  document.body.classList.toggle('is-loading', isLoading);
+}
+
 function setSurveyVisible(visible) {
   els.loginCard.classList.toggle('hidden', visible);
   els.surveyCard.classList.toggle('hidden', !visible);
@@ -200,6 +210,7 @@ function resetToLogin() {
   state.savedRatingsByPlayer = {};
   els.loginForm.reset();
   els.sessionBanner.textContent = '';
+  setLoading(false);
   renderIdPicker();
   updateStartButtonState();
   clearRatings();
@@ -418,6 +429,7 @@ async function restorePersistedSession() {
   const stored = loadStoredSession();
   if (!stored) return;
 
+  setLoading(true, 'Restoring session', 'Reconnecting to your current ratings...');
   try {
     const data = await api(`/api/sessions/${stored.sessionId}`);
     const exportData = await api(`/api/sessions/${stored.sessionId}/export`);
@@ -449,6 +461,8 @@ async function restorePersistedSession() {
   } catch {
     clearStoredSession();
     clearDraftRatings();
+  } finally {
+    setLoading(false);
   }
 }
 
@@ -469,6 +483,7 @@ els.ratingForm.addEventListener('submit', async (event) => {
   }
 
   els.nextButton.disabled = true;
+  setLoading(true, 'Saving ratings', 'Uploading this player’s scores...');
   try {
     const data = await api(`/api/sessions/${state.sessionId}/ratings`, {
       method: 'POST',
@@ -500,6 +515,7 @@ els.ratingForm.addEventListener('submit', async (event) => {
   } catch (error) {
     alert(error.message);
   } finally {
+    setLoading(false);
     els.nextButton.disabled = false;
   }
 });
@@ -532,6 +548,7 @@ els.startRatingButton.addEventListener('click', async () => {
   }
 
   els.startRatingButton.disabled = true;
+  setLoading(true, 'Starting session', 'Creating your rating session...');
   try {
     const data = await api('/api/sessions', {
       method: 'POST',
@@ -561,6 +578,7 @@ els.startRatingButton.addEventListener('click', async () => {
   } catch (error) {
     alert(error.message);
   } finally {
+    setLoading(false);
     updateStartButtonState();
   }
 });

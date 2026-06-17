@@ -29,7 +29,7 @@
             <span class="step">Step 1</span>
             <h2>Enter your IGN</h2>
           </div>
-          <p>First type your IGN, then select your own ID from the list below.</p>
+          <p>Enter your IGN, then select your own ID from the list below.</p>
           <form id="loginForm" class="login-form">
             <input id="ignInput" name="ign" placeholder="Your in-game name" autocomplete="nickname" required />
           </form>
@@ -86,6 +86,16 @@
       </div>
     </template>
 
-    <script src="./app.js?v=11" type="module"></script>
+    <div class="loading-overlay hidden" id="loadingOverlay" aria-live="polite" aria-busy="true">
+      <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <div>
+          <div class="loading-title" id="loadingTitle">Loading</div>
+          <div class="loading-copy" id="loadingCopy">Please wait...</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js?v=12" type="module"></script>
   </body>
 </html>
