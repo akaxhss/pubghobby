@@ -91,11 +91,29 @@ body {
 }
 
 .player-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: rgba(255,255,255,0.035);
   color: var(--text);
+}
+
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-count {
+  margin-left: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  flex: none;
 }
 
 .player-pill.current {
@@ -250,6 +268,12 @@ button:hover {
   background: rgba(255,255,255,0.05);
   color: var(--text);
   border: 1px solid var(--line);
+}
+
+.button-locked {
+  opacity: 0.45;
+  filter: blur(1px);
+  cursor: not-allowed;
 }
 
 .hidden {

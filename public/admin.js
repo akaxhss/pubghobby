@@ -89,7 +89,7 @@ async function selectSession(sessionId) {
   state.selectedSessionId = sessionId;
   renderSessionList(state.overview.sessions);
 
-  const data = await api(`/api/sessions/${sessionId}/export`);
+  const data = await api(`/api/admin/session-export?sessionId=${encodeURIComponent(sessionId)}`);
   els.detailTitle.textContent = `${data.session.ign} session #${data.session.id}`;
   els.downloadSessionButton.disabled = false;
   els.downloadSessionButton.onclick = () => {

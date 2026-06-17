@@ -89,7 +89,9 @@ function renderPlayerList() {
   getRosterPlayers().forEach((player, index) => {
     const row = document.createElement('div');
     row.className = 'player-pill';
-    row.textContent = player;
+    const ratings = getRatingsForPlayer(player);
+    const count = Object.keys(ratings).length;
+    row.innerHTML = `<span class="player-name">${player}</span><span class="player-count">${count}/5</span>`;
     if (state.completed || index < state.currentIndex) {
       row.classList.add('done');
     }
@@ -158,6 +160,7 @@ function chooseRating(skill, value, root) {
     const selected = Number(btn.dataset.value) <= value;
     btn.classList.toggle('selected', selected);
   });
+  updateSaveButtonState();
 }
 
 function clearRatings() {
@@ -175,6 +178,13 @@ function getViewPlayer() {
 
 function updateStartButtonState() {
   els.startRatingButton.disabled = !state.pendingSelfPlayer;
+}
+
+function updateSaveButtonState() {
+  const missing = skills.filter((skill) => !state.ratings[skill]);
+  const ready = missing.length === 0 && !state.completed;
+  els.nextButton.disabled = !ready;
+  els.nextButton.classList.toggle('button-locked', !ready);
 }
 
 function setLoading(isLoading, title = 'Loading', copy = 'Please wait...') {
@@ -325,7 +335,7 @@ function syncReviewUi() {
   state.currentPlayer = playerName;
   els.prevButton.disabled = state.viewIndex <= 0;
   els.nextReviewButton.disabled = state.viewIndex >= getRosterPlayers().length - 1 || state.completed;
-  els.nextButton.textContent = isReviewingSaved ? 'Save Changes' : 'Save & Next Player';
+  els.nextButton.textContent = 'Save';
   els.sessionBanner.textContent = `This IGN is logged in: ${state.ign} | Your ID: ${state.selfPlayer}`;
   els.currentPlayerTitle.textContent = playerName;
   els.sessionMeta.textContent = isReviewingSaved
@@ -354,6 +364,7 @@ function showPlayerAt(index, { preserveDraft = false } = {}) {
   }
 
   syncReviewUi();
+  updateSaveButtonState();
 }
 
 function buildSavedRatingsByPlayer(rows) {
@@ -404,6 +415,7 @@ function showCurrentPlayer({ preserveDraft = false } = {}) {
   if (!preserveDraft) {
     clearRatings();
   }
+  updateSaveButtonState();
 }
 
 async function api(path, options = {}) {
@@ -454,6 +466,7 @@ async function restorePersistedSession() {
     if (state.completed) {
       showCurrentPlayer();
     }
+    updateSaveButtonState();
   } catch {
     clearStoredSession();
     clearDraftRatings();
@@ -500,6 +513,7 @@ els.ratingForm.addEventListener('submit', async (event) => {
     } else {
       showPlayerAt(state.viewIndex, { preserveDraft: true });
     }
+    updateSaveButtonState();
   } catch (error) {
     alert(error.message);
   } finally {
@@ -512,6 +526,7 @@ renderSkillRows();
 renderPlayerList();
 renderIdPicker();
 updateStartButtonState();
+updateSaveButtonState();
 
 els.prevButton.addEventListener('click', () => {
   if (state.viewIndex <= 0) return;
