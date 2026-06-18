@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tourney Rater Admin</title>
-    <link rel="stylesheet" href="./styles.css?v=7" />
+    <link rel="stylesheet" href="./styles.css?v=8" />
   </head>
   <body class="admin-body">
     <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
@@ -90,15 +90,18 @@
     </main>
 
     <template id="sessionItemTemplate">
-      <button class="session-item" type="button">
-        <div class="session-item-top">
-          <strong class="session-ign"></strong>
-          <span class="session-status"></span>
-        </div>
-        <div class="session-meta-line"></div>
-      </button>
+      <div class="session-item">
+        <button class="session-item-main" type="button">
+          <div class="session-item-top">
+            <strong class="session-ign"></strong>
+            <span class="session-status"></span>
+          </div>
+          <div class="session-meta-line"></div>
+        </button>
+        <button class="session-item-delete danger-button" type="button">Delete</button>
+      </div>
     </template>
 
-    <script src="./admin.js?v=8" type="module"></script>
+    <script src="./admin.js?v=9" type="module"></script>
   </body>
 </html>

@@ -133,12 +133,32 @@ function renderSessionList(sessions) {
 
   sessions.forEach((session) => {
     const node = template.content.firstElementChild.cloneNode(true);
-  node.querySelector('.session-ign').textContent = `${session.ign} #${session.id}`;
+    const mainButton = node.querySelector('.session-item-main');
+    const deleteButton = node.querySelector('.session-item-delete');
+    node.querySelector('.session-ign').textContent = `${session.ign} #${session.id}`;
     node.querySelector('.session-status').textContent = session.completed_at ? 'done' : 'active';
     node.querySelector('.session-meta-line').textContent =
       `${session.rating_count} ratings • avg ${session.average_rating} • ${formatDate(session.created_at)}`;
     node.classList.toggle('active', session.id === state.selectedSessionId);
-    node.addEventListener('click', () => selectSession(session.id));
+    mainButton.addEventListener('click', () => selectSession(session.id));
+    deleteButton.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      try {
+        const confirmed = confirm(`Delete entry for session #${session.id} and reset it to zero? The session will stay in the database.`);
+        if (!confirmed) return;
+
+        await api(`/api/admin/sessions/${encodeURIComponent(session.id)}`, {
+          method: 'DELETE'
+        });
+
+        if (state.selectedSessionId === session.id) {
+          state.selectedSessionId = null;
+        }
+        await loadDashboard();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
     els.sessionList.appendChild(node);
   });
 }
@@ -164,7 +184,6 @@ async function selectSession(sessionId) {
       });
 
       await loadDashboard();
-      await selectSession(sessionId);
     } catch (error) {
       alert(error.message);
     }

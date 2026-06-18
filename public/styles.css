@@ -537,13 +537,40 @@ button:disabled {
 }
 
 .session-item {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
   width: 100%;
   text-align: left;
   background: rgba(255,255,255,0.04);
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 14px;
+  padding: 12px;
+}
+
+.session-item-main {
+  flex: 1;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 10px;
+}
+
+.session-item-delete {
+  align-self: center;
+  flex: none;
+  padding: 12px 14px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+
+.session-item-delete:hover {
+  filter: brightness(0.98);
 }
 
 .session-item.active {
@@ -739,6 +766,14 @@ th {
 
   .admin-list {
     max-height: none;
+  }
+
+  .session-item {
+    flex-direction: column;
+  }
+
+  .session-item-delete {
+    width: 100%;
   }
 
   .detail-grid {
