@@ -41,6 +41,9 @@ export default async function handler(req, res) {
   }
 
   const session = await createSession(ign, getClientId(req), selfPlayer);
+  if (session?.error) {
+    return sendJson(res, session.statusCode ?? 409, { error: session.error });
+  }
   return sendJson(res, 200, {
     sessionId: session.id,
     ign: session.ign,

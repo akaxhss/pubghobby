@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tourney Rater Admin</title>
-    <link rel="stylesheet" href="./styles.css?v=6" />
+    <link rel="stylesheet" href="./styles.css?v=7" />
   </head>
   <body class="admin-body">
     <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
@@ -58,7 +58,10 @@
               <span class="step">Details</span>
               <h2 id="detailTitle">Select a session</h2>
             </div>
-            <button id="downloadSessionButton" type="button" disabled>Download session JSON</button>
+            <div class="detail-actions">
+              <button id="downloadSessionButton" type="button" disabled>Download session JSON</button>
+              <button id="deleteSessionButton" type="button" class="danger-button" disabled>Delete session</button>
+            </div>
           </div>
           <div class="admin-detail" id="sessionDetail">
             <p class="muted">Choose a session to see its ratings.</p>
@@ -77,6 +80,6 @@
       </button>
     </template>
 
-    <script src="./admin.js?v=3" type="module"></script>
+    <script src="./admin.js?v=4" type="module"></script>
   </body>
 </html>

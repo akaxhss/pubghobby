@@ -211,6 +211,14 @@ body {
   gap: 10px;
 }
 
+.id-empty {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  background: rgba(255,255,255,0.03);
+}
+
 .id-chip {
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.04);
@@ -264,10 +272,20 @@ button:hover {
   filter: brightness(1.03);
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .ghost-button {
   background: rgba(255,255,255,0.05);
   color: var(--text);
   border: 1px solid var(--line);
+}
+
+.danger-button {
+  background: linear-gradient(135deg, #ff7a7a, #ffb1b1);
+  color: #22080a;
 }
 
 .button-locked {
@@ -446,6 +464,13 @@ button:hover {
 }
 
 .admin-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.detail-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;

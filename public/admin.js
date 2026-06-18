@@ -15,7 +15,8 @@ const els = {
   detailTitle: document.getElementById('detailTitle'),
   refreshButton: document.getElementById('refreshButton'),
   downloadAllButton: document.getElementById('downloadAllButton'),
-  downloadSessionButton: document.getElementById('downloadSessionButton')
+  downloadSessionButton: document.getElementById('downloadSessionButton'),
+  deleteSessionButton: document.getElementById('deleteSessionButton')
 };
 
 const state = {
@@ -95,6 +96,26 @@ async function selectSession(sessionId) {
   els.downloadSessionButton.onclick = () => {
     downloadJson(`tourney-session-${data.session.id}.json`, data);
   };
+  els.deleteSessionButton.disabled = false;
+  els.deleteSessionButton.onclick = async () => {
+    try {
+      const confirmed = confirm(`Delete session #${data.session.id} for ${data.session.ign}? This will free the selected ID.`);
+      if (!confirmed) return;
+
+      await api(`/api/admin/sessions/${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE'
+      });
+
+      state.selectedSessionId = null;
+      els.sessionDetail.innerHTML = '<p class="muted">Select a session to see its ratings.</p>';
+      els.detailTitle.textContent = 'Select a session';
+      els.downloadSessionButton.disabled = true;
+      els.deleteSessionButton.disabled = true;
+      await loadOverview({ skipAutoSelect: true });
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   const rows = data.rows.map((row) => {
     return `<tr><td>${escapeHtml(row.target_player)}</td><td>${escapeHtml(row.skill)}</td><td>${escapeHtml(row.rating)}</td><td>${escapeHtml(row.created_at)}</td></tr>`;
@@ -118,12 +139,12 @@ async function selectSession(sessionId) {
   `;
 }
 
-async function loadOverview() {
+async function loadOverview({ skipAutoSelect = false } = {}) {
   const overview = await api('/api/admin/overview');
   state.overview = overview;
   renderSummary(overview);
   renderSessionList(overview.sessions);
-  if (!state.selectedSessionId && overview.sessions.length) {
+  if (!skipAutoSelect && !state.selectedSessionId && overview.sessions.length) {
     await selectSession(overview.sessions[0].id);
   }
 }
@@ -139,6 +160,8 @@ els.downloadAllButton.addEventListener('click', async () => {
 
 loadOverview().catch((error) => {
   els.sessionDetail.innerHTML = `<p class="muted">${error.message}</p>`;
+  els.downloadSessionButton.disabled = true;
+  els.deleteSessionButton.disabled = true;
 });
 
 startMeshBackground(document.getElementById('meshBackground'), {

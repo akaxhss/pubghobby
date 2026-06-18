@@ -128,6 +128,21 @@ export function getRosterPlayers(selfPlayer = '') {
   return players.filter((player) => player !== selfPlayer);
 }
 
+export async function getReservedPlayers() {
+  const { rows } = await queryDb(`
+    SELECT DISTINCT self_player
+    FROM sessions
+    WHERE self_player <> ''
+    ORDER BY self_player ASC;
+  `);
+  return rows.map((row) => row.self_player).filter(Boolean);
+}
+
+export async function getAvailablePlayers() {
+  const reserved = new Set(await getReservedPlayers());
+  return players.filter((player) => !reserved.has(player));
+}
+
 export function sendJson(res, statusCode, payload) {
   allowCors(res);
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
@@ -136,7 +151,7 @@ export function sendJson(res, statusCode, payload) {
 
 export function allowCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Client-Id');
   res.setHeader('Cache-Control', 'no-store');
 }
@@ -172,11 +187,32 @@ export async function getSession(sessionId) {
 }
 
 export async function createSession(ign, deviceId = '', selfPlayer = '') {
-  const { rows } = await queryDb(
-    'INSERT INTO sessions (ign, device_id, self_player) VALUES ($1, $2, $3) RETURNING id, ign, device_id, self_player, current_index;',
-    [ign, deviceId, selfPlayer]
-  );
-  return rows[0];
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('LOCK TABLE sessions IN SHARE ROW EXCLUSIVE MODE;');
+
+    const { rows: existingRows } = await client.query(
+      'SELECT id FROM sessions WHERE self_player = $1 LIMIT 1;',
+      [selfPlayer]
+    );
+    if (existingRows.length) {
+      await client.query('ROLLBACK');
+      return { error: 'This ID is already in use.', statusCode: 409 };
+    }
+
+    const { rows } = await client.query(
+      'INSERT INTO sessions (ign, device_id, self_player) VALUES ($1, $2, $3) RETURNING id, ign, device_id, self_player, current_index;',
+      [ign, deviceId, selfPlayer]
+    );
+    await client.query('COMMIT');
+    return rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export function getClientId(req) {
@@ -350,4 +386,12 @@ export async function getAdminExport() {
       ORDER BY id ASC;
     `)).rows
   };
+}
+
+export async function deleteSession(sessionId) {
+  const { rows } = await queryDb(
+    'DELETE FROM sessions WHERE id = $1 RETURNING id, ign, self_player;',
+    [Number(sessionId)]
+  );
+  return rows[0] ?? null;
 }

@@ -93,7 +93,7 @@ function sendJson(res, statusCode, payload) {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id'
   });
   res.end(JSON.stringify(payload));
@@ -119,6 +119,21 @@ function getRosterPlayers(selfPlayer = '') {
   return players.filter((player) => player !== selfPlayer);
 }
 
+async function getReservedPlayers() {
+  const { rows } = await queryDb(`
+    SELECT DISTINCT self_player
+    FROM sessions
+    WHERE self_player <> ''
+    ORDER BY self_player ASC;
+  `);
+  return rows.map((row) => row.self_player).filter(Boolean);
+}
+
+async function getAvailablePlayers() {
+  const reserved = new Set(await getReservedPlayers());
+  return players.filter((player) => !reserved.has(player));
+}
+
 function getClientId(req) {
   return String(req.headers['x-client-id'] ?? '').trim();
 }
@@ -129,6 +144,14 @@ function isSessionLockedToDevice(session, clientId) {
 
 async function getSession(sessionId) {
   const { rows } = await queryDb('SELECT * FROM sessions WHERE id = $1 LIMIT 1;', [Number(sessionId)]);
+  return rows[0] ?? null;
+}
+
+async function deleteSession(sessionId) {
+  const { rows } = await queryDb(
+    'DELETE FROM sessions WHERE id = $1 RETURNING id, ign, self_player;',
+    [Number(sessionId)]
+  );
   return rows[0] ?? null;
 }
 
@@ -168,7 +191,7 @@ async function handleApi(req, res, url) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+      'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id'
     });
     res.end();
@@ -176,7 +199,13 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'GET' && url.pathname === '/api/config') {
-    return sendJson(res, 200, { players, skills });
+    return sendJson(res, 200, {
+      players,
+      skills,
+      availablePlayers: await getAvailablePlayers(),
+      reservedPlayers: await getReservedPlayers(),
+      databaseConfigured: true
+    });
   }
 
   if (req.method === 'POST' && url.pathname === '/api/sessions') {
@@ -192,12 +221,32 @@ async function handleApi(req, res, url) {
     }
 
     const clientId = getClientId(req);
+    const client = await pool.connect();
+    let session;
+    try {
+      await client.query('BEGIN');
+      await client.query('LOCK TABLE sessions IN SHARE ROW EXCLUSIVE MODE;');
+      const { rows: existingRows } = await client.query(
+        'SELECT id FROM sessions WHERE self_player = $1 LIMIT 1;',
+        [selfPlayer]
+      );
+      if (existingRows.length) {
+        await client.query('ROLLBACK');
+        return sendJson(res, 409, { error: 'This ID is already in use.' });
+      }
 
-    const { rows } = await queryDb(
-      'INSERT INTO sessions (ign, device_id, self_player) VALUES ($1, $2, $3) RETURNING id, ign, device_id, self_player, current_index;',
-      [ign, clientId, selfPlayer]
-    );
-    const session = rows[0];
+      const { rows } = await client.query(
+        'INSERT INTO sessions (ign, device_id, self_player) VALUES ($1, $2, $3) RETURNING id, ign, device_id, self_player, current_index;',
+        [ign, clientId, selfPlayer]
+      );
+      session = rows[0];
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
 
     return sendJson(res, 200, {
       sessionId: session.id,
@@ -213,6 +262,7 @@ async function handleApi(req, res, url) {
   const sessionMatch = url.pathname.match(/^\/api\/sessions\/(\d+)$/);
   const ratingsMatch = url.pathname.match(/^\/api\/sessions\/(\d+)\/ratings$/);
   const exportMatch = url.pathname.match(/^\/api\/sessions\/(\d+)\/export$/);
+  const adminDeleteMatch = url.pathname.match(/^\/api\/admin\/sessions\/(\d+)$/);
 
   if (req.method === 'GET' && sessionMatch) {
     const session = await getSession(sessionMatch[1]);
@@ -360,6 +410,43 @@ async function handleApi(req, res, url) {
       sessions: await getSessionSummaries(),
       ratings: await getAllRatings()
     });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/admin/session-export') {
+    const sessionId = url.searchParams.get('sessionId');
+    if (!sessionId) {
+      return sendJson(res, 400, { error: 'sessionId is required.' });
+    }
+    const session = await getSession(sessionId);
+    if (!session) {
+      return sendJson(res, 404, { error: 'Session not found.' });
+    }
+    const { rows } = await queryDb(
+      `
+      SELECT target_player, skill, rating, created_at
+      FROM ratings
+      WHERE session_id = $1
+      ORDER BY id ASC;
+    `,
+      [Number(sessionId)]
+    );
+    return sendJson(res, 200, {
+      session: {
+        id: session.id,
+        ign: session.ign,
+        createdAt: session.created_at,
+        completedAt: session.completed_at
+      },
+      rows
+    });
+  }
+
+  if (req.method === 'DELETE' && adminDeleteMatch) {
+    const deleted = await deleteSession(adminDeleteMatch[1]);
+    if (!deleted) {
+      return sendJson(res, 404, { error: 'Session not found.' });
+    }
+    return sendJson(res, 200, { deleted: true, sessionId: Number(adminDeleteMatch[1]) });
   }
 
   return false;

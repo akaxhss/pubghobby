@@ -43,6 +43,7 @@ const state = {
   sessionExpiresAt: null,
   selfPlayer: '',
   pendingSelfPlayer: '',
+  availablePlayers: null,
   currentIndex: 0,
   viewIndex: 0,
   completed: false,
@@ -84,6 +85,10 @@ function getRosterPlayers() {
   return allPlayers.filter((player) => player !== state.selfPlayer);
 }
 
+function getSelectablePlayers() {
+  return state.availablePlayers ?? allPlayers;
+}
+
 function renderPlayerList() {
   els.playerList.innerHTML = '';
   getRosterPlayers().forEach((player, index) => {
@@ -108,7 +113,16 @@ function renderPlayerList() {
 function renderIdPicker() {
   els.idPicker.innerHTML = '';
 
-  allPlayers.forEach((player) => {
+  const selectablePlayers = getSelectablePlayers();
+  if (!selectablePlayers.length) {
+    const empty = document.createElement('div');
+    empty.className = 'id-empty';
+    empty.textContent = 'All IDs are currently in use. Please ask admin to free one.';
+    els.idPicker.appendChild(empty);
+    return;
+  }
+
+  selectablePlayers.forEach((player) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'id-chip';
@@ -160,6 +174,7 @@ function chooseRating(skill, value, root) {
     const selected = Number(btn.dataset.value) <= value;
     btn.classList.toggle('selected', selected);
   });
+  renderPlayerList();
   updateSaveButtonState();
 }
 
@@ -185,6 +200,11 @@ function updateSaveButtonState() {
   const ready = missing.length === 0 && !state.completed;
   els.nextButton.disabled = !ready;
   els.nextButton.classList.toggle('button-locked', !ready);
+  els.nextButton.textContent = state.completed
+    ? 'Save'
+    : state.viewIndex < state.currentIndex
+      ? 'Save Changes'
+      : 'Save';
 }
 
 function setLoading(isLoading, title = 'Loading', copy = 'Please wait...') {
@@ -216,8 +236,10 @@ function resetToLogin() {
   state.ratings = {};
   state.savedRatingsByPlayer = {};
   els.sessionBanner.textContent = '';
-  setLoading(false);
-  renderIdPicker();
+  setLoading(true, 'Refreshing IDs', 'Checking for newly freed IDs...');
+  void refreshSelectablePlayers().finally(() => {
+    setLoading(false);
+  });
   updateStartButtonState();
   clearRatings();
   renderPlayerList();
@@ -310,6 +332,24 @@ function clearDraftRatings() {
   localStorage.removeItem(DRAFT_STORAGE_KEY);
 }
 
+async function refreshSelectablePlayers() {
+  try {
+    const config = await api('/api/config');
+    state.availablePlayers = Array.isArray(config.availablePlayers) && config.availablePlayers.length
+      ? config.availablePlayers
+      : [...allPlayers];
+  } catch {
+    state.availablePlayers = [...allPlayers];
+  }
+
+  if (state.pendingSelfPlayer && !state.availablePlayers.includes(state.pendingSelfPlayer)) {
+    state.pendingSelfPlayer = '';
+  }
+
+  renderIdPicker();
+  updateStartButtonState();
+}
+
 function getRatingsForPlayer(playerName) {
   const drafts = loadDraftRatings();
   return drafts[playerName] ?? state.savedRatingsByPlayer[playerName] ?? {};
@@ -335,7 +375,7 @@ function syncReviewUi() {
   state.currentPlayer = playerName;
   els.prevButton.disabled = state.viewIndex <= 0;
   els.nextReviewButton.disabled = state.viewIndex >= getRosterPlayers().length - 1 || state.completed;
-  els.nextButton.textContent = 'Save';
+  els.nextButton.textContent = isReviewingSaved ? 'Save Changes' : 'Save';
   els.sessionBanner.textContent = `This IGN is logged in: ${state.ign} | Your ID: ${state.selfPlayer}`;
   els.currentPlayerTitle.textContent = playerName;
   els.sessionMeta.textContent = isReviewingSaved
@@ -435,7 +475,7 @@ async function api(path, options = {}) {
 
 async function restorePersistedSession() {
   const stored = loadStoredSession();
-  if (!stored) return;
+  if (!stored) return false;
 
   setLoading(true, 'Restoring session', 'Reconnecting to your current ratings...');
   try {
@@ -473,6 +513,7 @@ async function restorePersistedSession() {
   } finally {
     setLoading(false);
   }
+  return true;
 }
 
 els.ratingForm.addEventListener('submit', async (event) => {
@@ -522,9 +563,9 @@ els.ratingForm.addEventListener('submit', async (event) => {
   }
 });
 
+setLoading(true, 'Loading app', 'Checking available IDs and saved sessions...');
 renderSkillRows();
 renderPlayerList();
-renderIdPicker();
 updateStartButtonState();
 updateSaveButtonState();
 
@@ -591,7 +632,11 @@ document.addEventListener('keydown', (event) => {
   els.startRatingButton.click();
 });
 
-await restorePersistedSession();
+await refreshSelectablePlayers();
+const restored = await restorePersistedSession();
+if (!restored) {
+  setLoading(false);
+}
 
 startMeshBackground(document.getElementById('meshBackground'), {
   pointCount: 48,

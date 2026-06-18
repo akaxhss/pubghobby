@@ -1,4 +1,4 @@
-import { allowCors, hasDatabaseUrl, players, sendJson } from './_lib.js';
+import { allowCors, getAvailablePlayers, getReservedPlayers, hasDatabaseUrl, players, sendJson } from './_lib.js';
 
 export default async function handler(req, res) {
   allowCors(res);
@@ -12,8 +12,14 @@ export default async function handler(req, res) {
     return sendJson(res, 405, { error: 'Method not allowed.' });
   }
 
+  const [availablePlayers, reservedPlayers] = hasDatabaseUrl()
+    ? await Promise.all([getAvailablePlayers(), getReservedPlayers()])
+    : [players, []];
+
   return sendJson(res, 200, {
     players,
+    availablePlayers,
+    reservedPlayers,
     databaseConfigured: hasDatabaseUrl()
   });
 }
