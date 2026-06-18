@@ -485,13 +485,6 @@ button:disabled {
   margin-top: 12px;
 }
 
-.results-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
 .results-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -840,12 +833,4 @@ th {
     grid-template-columns: 1fr;
   }
 
-  .results-actions {
-    width: 100%;
-  }
-
-  .results-actions .admin-link {
-    width: 100%;
-    justify-content: center;
-  }
 }
