@@ -228,6 +228,28 @@ async function getAllRatings() {
   return rows;
 }
 
+async function getPlayerResults() {
+  const { rows } = await queryDb(`
+    SELECT
+      target_player,
+      COUNT(*)::int AS rating_count,
+      COALESCE(ROUND(AVG(rating)::numeric, 0), 0)::int AS average_rating
+    FROM ratings
+    GROUP BY target_player
+    ORDER BY target_player ASC;
+  `);
+
+  const byPlayer = new Map(rows.map((row) => [row.target_player, row]));
+  return players.map((player) => {
+    const row = byPlayer.get(player);
+    return {
+      player,
+      ratingCount: Number(row?.rating_count ?? 0),
+      averageRating: Number(row?.average_rating ?? 0)
+    };
+  });
+}
+
 async function handleApi(req, res, url) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
@@ -459,6 +481,14 @@ async function handleApi(req, res, url) {
     });
   }
 
+  if (req.method === 'GET' && url.pathname === '/api/results') {
+    await ensureDatabase();
+    return sendJson(res, 200, {
+      generatedAt: new Date().toISOString(),
+      results: await getPlayerResults()
+    });
+  }
+
   if (req.method === 'GET' && url.pathname === '/api/admin/session-export') {
     if (!isAdminAuthorized(req)) {
       return sendJson(res, 401, { error: 'Admin login required.' });
@@ -532,7 +562,11 @@ function readJsonBody(req) {
 }
 
 function sendStatic(req, res, url) {
-  const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
+  const pathname =
+    url.pathname === '/' ? '/index.html' :
+    url.pathname === '/admin' ? '/admin.html' :
+    url.pathname === '/results' ? '/results.html' :
+    url.pathname;
   const filePath = path.normalize(path.join(publicDir, pathname));
   if (!filePath.startsWith(publicDir)) {
     return sendText(res, 403, 'Forbidden');

@@ -416,6 +416,28 @@ export async function getAdminExport() {
   };
 }
 
+export async function getPlayerResults() {
+  const { rows } = await queryDb(`
+    SELECT
+      target_player,
+      COUNT(*)::int AS rating_count,
+      COALESCE(ROUND(AVG(rating)::numeric, 0), 0)::int AS average_rating
+    FROM ratings
+    GROUP BY target_player
+    ORDER BY target_player ASC;
+  `);
+
+  const byPlayer = new Map(rows.map((row) => [row.target_player, row]));
+  return players.map((player) => {
+    const row = byPlayer.get(player);
+    return {
+      player,
+      ratingCount: Number(row?.rating_count ?? 0),
+      averageRating: Number(row?.average_rating ?? 0)
+    };
+  });
+}
+
 export async function deleteSession(sessionId) {
   const client = await getPool().connect();
   try {

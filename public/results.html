@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tourney Rater Results</title>
+    <link rel="stylesheet" href="./styles.css?v=9" />
+  </head>
+  <body class="results-body">
+    <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
+    <main class="results-shell">
+      <section class="card results-card">
+        <div class="card-head">
+          <div>
+            <span class="step">Results</span>
+            <h1>Player Averages</h1>
+            <p class="admin-subtitle">Rounded to the nearest whole number, with .5 rounding up.</p>
+          </div>
+          <div class="results-actions">
+            <a class="admin-link" href="./index.html">Open rater</a>
+            <a class="admin-link" href="./admin.html">Open admin</a>
+          </div>
+        </div>
+
+        <div class="results-summary" id="resultsSummary">
+          <div class="results-summary-card">
+            <span class="step">Players</span>
+            <strong id="resultsPlayerCount">0</strong>
+          </div>
+          <div class="results-summary-card">
+            <span class="step">Ratings</span>
+            <strong id="resultsRatingCount">0</strong>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Average</th>
+                <th>Ratings</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <template id="resultRowTemplate">
+      <tr>
+        <td class="result-player"></td>
+        <td class="result-average"></td>
+        <td class="result-count"></td>
+      </tr>
+    </template>
+
+    <script src="./results.js?v=1" type="module"></script>
+  </body>
+</html>
