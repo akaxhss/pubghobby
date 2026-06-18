@@ -23,10 +23,14 @@ export default async function handler(req, res) {
     return sendJson(res, 400, { error: 'sessionId is required.' });
   }
 
-  const reset = await resetSession(sessionId);
-  if (!reset) {
-    return sendJson(res, 404, { error: 'Session not found.' });
-  }
+  try {
+    const reset = await resetSession(sessionId);
+    if (!reset) {
+      return sendJson(res, 404, { error: 'Session not found.' });
+    }
 
-  return sendJson(res, 200, { reset: true, sessionId: Number(sessionId) });
+    return sendJson(res, 200, { reset: true, sessionId: Number(sessionId) });
+  } catch (error) {
+    return sendJson(res, 500, { error: error.message || 'Failed to reset session.' });
+  }
 }

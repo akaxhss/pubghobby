@@ -393,7 +393,7 @@ export async function resetSession(sessionId) {
   try {
     await client.query('BEGIN');
     const { rows: sessionRows } = await client.query(
-      'SELECT id, ign, self_player FROM sessions WHERE id = $1 LIMIT 1 FOR UPDATE;',
+      'SELECT id, ign, self_player FROM sessions WHERE id = $1 FOR UPDATE;',
       [Number(sessionId)]
     );
     const session = sessionRows[0];

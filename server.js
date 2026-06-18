@@ -152,7 +152,7 @@ async function resetSession(sessionId) {
   try {
     await client.query('BEGIN');
     const { rows: sessionRows } = await client.query(
-      'SELECT id, ign, self_player FROM sessions WHERE id = $1 LIMIT 1 FOR UPDATE;',
+      'SELECT id, ign, self_player FROM sessions WHERE id = $1 FOR UPDATE;',
       [Number(sessionId)]
     );
     const session = sessionRows[0];
@@ -469,11 +469,15 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'DELETE' && adminDeleteMatch) {
-    const reset = await resetSession(adminDeleteMatch[1]);
-    if (!reset) {
-      return sendJson(res, 404, { error: 'Session not found.' });
+    try {
+      const reset = await resetSession(adminDeleteMatch[1]);
+      if (!reset) {
+        return sendJson(res, 404, { error: 'Session not found.' });
+      }
+      return sendJson(res, 200, { reset: true, sessionId: Number(adminDeleteMatch[1]) });
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message || 'Failed to reset session.' });
     }
-    return sendJson(res, 200, { reset: true, sessionId: Number(adminDeleteMatch[1]) });
   }
 
   return false;
