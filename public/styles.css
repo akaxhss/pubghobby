@@ -610,9 +610,83 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .main {
+    order: 1;
+    padding: 18px 14px 22px;
+  }
+
   .rail {
+    order: 2;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    padding: 18px 14px 22px;
+  }
+
+  .rail-copy {
+    display: none;
+  }
+
+  .player-list {
+    gap: 8px;
+  }
+
+  .brand {
+    align-items: flex-start;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 18px 16px;
+    border-radius: 22px;
+  }
+
+  .card-head,
+  .topline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .login-card h2,
+  .topline h2 {
+    font-size: 1.6rem;
+    line-height: 1.1;
+  }
+
+  .id-picker-label {
+    display: none;
+  }
+
+  .id-picker {
+    gap: 8px;
+  }
+
+  .id-chip {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .login-actions,
+  .actions,
+  .review-actions,
+  .detail-actions,
+  .admin-actions {
+    width: 100%;
+  }
+
+  .login-actions button,
+  .actions button,
+  .review-actions button,
+  .detail-actions button,
+  .admin-actions button,
+  .admin-link {
+    width: 100%;
+    justify-content: center;
   }
 
   .skill-row {
@@ -621,6 +695,11 @@ th {
 
   .mesh-background {
     opacity: 0.85;
+  }
+
+  .progress-labels,
+  .session-banner {
+    font-size: 0.95rem;
   }
 
   .admin-header,
@@ -632,5 +711,18 @@ th {
 
   .admin-header {
     align-items: start;
+  }
+
+  .admin-shell {
+    width: min(1240px, calc(100% - 20px));
+    padding-top: 18px;
+  }
+
+  .admin-list {
+    max-height: none;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
   }
 }
