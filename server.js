@@ -51,6 +51,9 @@ const skills = [
   'Game Sense'
 ];
 
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'password';
+
 async function queryDb(text, params = []) {
   return pool.query(text, params);
 }
@@ -140,6 +143,27 @@ function getClientId(req) {
 
 function isSessionLockedToDevice(session, clientId) {
   return Boolean(session?.device_id) && session.device_id !== clientId;
+}
+
+function isAdminAuthorized(req) {
+  const header = String(req.headers.authorization ?? '');
+  if (!header.startsWith('Basic ')) {
+    return false;
+  }
+
+  try {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
+    const separator = decoded.indexOf(':');
+    if (separator < 0) {
+      return false;
+    }
+
+    const username = decoded.slice(0, separator);
+    const password = decoded.slice(separator + 1);
+    return username === ADMIN_USERNAME && password === ADMIN_PASSWORD;
+  } catch {
+    return false;
+  }
 }
 
 async function getSession(sessionId) {
@@ -412,6 +436,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'GET' && url.pathname === '/api/admin/overview') {
+    if (!isAdminAuthorized(req)) {
+      return sendJson(res, 401, { error: 'Admin login required.' });
+    }
     const sessionCount = Number((await queryDb('SELECT COUNT(*)::int AS count FROM sessions;')).rows[0]?.count ?? 0);
     const completedCount = Number(
       (await queryDb('SELECT COUNT(*)::int AS count FROM sessions WHERE completed_at IS NOT NULL;')).rows[0]?.count ?? 0
@@ -432,6 +459,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'GET' && url.pathname === '/api/admin/export') {
+    if (!isAdminAuthorized(req)) {
+      return sendJson(res, 401, { error: 'Admin login required.' });
+    }
     return sendJson(res, 200, {
       exportedAt: new Date().toISOString(),
       sessions: await getSessionSummaries(),
@@ -440,6 +470,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'GET' && url.pathname === '/api/admin/session-export') {
+    if (!isAdminAuthorized(req)) {
+      return sendJson(res, 401, { error: 'Admin login required.' });
+    }
     const sessionId = url.searchParams.get('sessionId');
     if (!sessionId) {
       return sendJson(res, 400, { error: 'sessionId is required.' });
@@ -469,6 +502,9 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === 'DELETE' && adminDeleteMatch) {
+    if (!isAdminAuthorized(req)) {
+      return sendJson(res, 401, { error: 'Admin login required.' });
+    }
     try {
       const reset = await resetSession(adminDeleteMatch[1]);
       if (!reset) {

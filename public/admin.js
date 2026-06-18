@@ -5,7 +5,16 @@ const API_BASE =
     ? 'http://127.0.0.1:3000'
     : window.location.origin;
 
+const ADMIN_AUTH_STORAGE_KEY = 'tourney_rater_admin_auth';
+
 const els = {
+  adminLoginCard: document.getElementById('adminLoginCard'),
+  adminDashboard: document.getElementById('adminDashboard'),
+  adminLoginForm: document.getElementById('adminLoginForm'),
+  adminUsername: document.getElementById('adminUsername'),
+  adminPassword: document.getElementById('adminPassword'),
+  adminLoginError: document.getElementById('adminLoginError'),
+  logoutButton: document.getElementById('logoutButton'),
   sessionCount: document.getElementById('sessionCount'),
   completedCount: document.getElementById('completedCount'),
   ratingCount: document.getElementById('ratingCount'),
@@ -21,7 +30,8 @@ const els = {
 
 const state = {
   overview: null,
-  selectedSessionId: null
+  selectedSessionId: null,
+  authToken: localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) || ''
 };
 
 function escapeHtml(value) {
@@ -36,7 +46,8 @@ function escapeHtml(value) {
 async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(state.authToken ? { Authorization: `Basic ${state.authToken}` } : {})
     },
     ...options
   });
@@ -45,6 +56,47 @@ async function api(path, options = {}) {
     throw new Error(data.error || 'Request failed');
   }
   return data;
+}
+
+function buildAdminAuthToken(username, password) {
+  return window.btoa(`${username}:${password}`);
+}
+
+function setAdminLoginError(message = '') {
+  els.adminLoginError.textContent = message;
+  els.adminLoginError.classList.toggle('hidden', !message);
+}
+
+function setAdminDashboardVisible(visible) {
+  els.adminLoginCard.classList.toggle('hidden', visible);
+  els.adminDashboard.classList.toggle('hidden', !visible);
+  if (visible) {
+    setAdminLoginError('');
+  }
+}
+
+async function loadDashboard() {
+  const overview = await api('/api/admin/overview');
+  state.overview = overview;
+  renderSummary(overview);
+  renderSessionList(overview.sessions);
+  setAdminDashboardVisible(true);
+  if (!state.selectedSessionId && overview.sessions.length) {
+    await selectSession(overview.sessions[0].id);
+  }
+}
+
+function clearAdminSession() {
+  state.authToken = '';
+  localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
+  setAdminDashboardVisible(false);
+  setAdminLoginError('');
+  state.selectedSessionId = null;
+  state.overview = null;
+  els.sessionDetail.innerHTML = '<p class="muted">Choose a session to see its ratings.</p>';
+  els.detailTitle.textContent = 'Select a session';
+  els.downloadSessionButton.disabled = true;
+  els.deleteSessionButton.disabled = true;
 }
 
 function formatDate(value) {
@@ -111,7 +163,7 @@ async function selectSession(sessionId) {
         method: 'DELETE'
       });
 
-      await loadOverview({ skipAutoSelect: true });
+      await loadDashboard();
       await selectSession(sessionId);
     } catch (error) {
       alert(error.message);
@@ -140,18 +192,14 @@ async function selectSession(sessionId) {
   `;
 }
 
-async function loadOverview({ skipAutoSelect = false } = {}) {
-  const overview = await api('/api/admin/overview');
-  state.overview = overview;
-  renderSummary(overview);
-  renderSessionList(overview.sessions);
-  if (!skipAutoSelect && !state.selectedSessionId && overview.sessions.length) {
-    await selectSession(overview.sessions[0].id);
-  }
-}
-
 els.refreshButton.addEventListener('click', () => {
-  loadOverview().catch((error) => alert(error.message));
+  loadDashboard().catch((error) => {
+    if (error.message === 'Admin login required.') {
+      clearAdminSession();
+      return;
+    }
+    alert(error.message);
+  });
 });
 
 els.downloadAllButton.addEventListener('click', async () => {
@@ -159,10 +207,50 @@ els.downloadAllButton.addEventListener('click', async () => {
   downloadJson('tourney-admin-export.json', data);
 });
 
-loadOverview().catch((error) => {
-  els.sessionDetail.innerHTML = `<p class="muted">${error.message}</p>`;
-  els.downloadSessionButton.disabled = true;
-  els.deleteSessionButton.disabled = true;
+els.logoutButton.addEventListener('click', () => {
+  clearAdminSession();
+});
+
+els.adminLoginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  setAdminLoginError('');
+
+  const username = els.adminUsername.value.trim();
+  const password = els.adminPassword.value;
+  if (!username || !password) {
+    setAdminLoginError('Enter both username and password.');
+    return;
+  }
+
+  state.authToken = buildAdminAuthToken(username, password);
+  localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, state.authToken);
+
+  try {
+    await loadDashboard();
+    els.adminPassword.value = '';
+  } catch (error) {
+    clearAdminSession();
+    setAdminLoginError(error.message === 'Admin login required.' ? 'Invalid username or password.' : error.message);
+  }
+});
+
+async function bootAdmin() {
+  if (!state.authToken) {
+    setAdminDashboardVisible(false);
+    return;
+  }
+
+  try {
+    await loadDashboard();
+  } catch (error) {
+    clearAdminSession();
+    setAdminLoginError(error.message === 'Admin login required.' ? 'Invalid username or password.' : error.message);
+  }
+}
+
+bootAdmin().catch((error) => {
+  clearAdminSession();
+  setAdminLoginError(error.message);
 });
 
 startMeshBackground(document.getElementById('meshBackground'), {

@@ -9,7 +9,24 @@
   <body class="admin-body">
     <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
     <main class="admin-shell">
-      <header class="admin-header">
+      <section class="card admin-login-card" id="adminLoginCard">
+        <div class="card-head">
+          <div>
+            <span class="step">Admin Login</span>
+            <h1>Sign in to continue</h1>
+            <p class="admin-subtitle">Use <strong>admin</strong> / <strong>password</strong> to open the dashboard.</p>
+          </div>
+        </div>
+        <form class="admin-login-form" id="adminLoginForm">
+          <input id="adminUsername" type="text" autocomplete="username" placeholder="Username" value="admin" />
+          <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password" />
+          <button type="submit">Log in</button>
+        </form>
+        <p class="admin-auth-error muted hidden" id="adminLoginError"></p>
+      </section>
+
+      <section class="admin-dashboard hidden" id="adminDashboard">
+        <header class="admin-header">
         <div>
           <div class="eyebrow">Admin</div>
           <h1>Tourney Rater Dashboard</h1>
@@ -17,6 +34,7 @@
         </div>
         <div class="admin-actions">
           <a class="admin-link" href="./index.html">Open rater</a>
+          <button id="logoutButton" type="button" class="ghost-button">Log out</button>
           <button id="refreshButton" type="button">Refresh data</button>
           <button id="downloadAllButton" type="button">Download all JSON</button>
         </div>
@@ -68,6 +86,7 @@
           </div>
         </article>
       </section>
+      </section>
     </main>
 
     <template id="sessionItemTemplate">
@@ -80,6 +99,6 @@
       </button>
     </template>
 
-    <script src="./admin.js?v=6" type="module"></script>
+    <script src="./admin.js?v=8" type="module"></script>
   </body>
 </html>

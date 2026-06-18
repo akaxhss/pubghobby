@@ -450,6 +450,25 @@ button:disabled {
   z-index: 1;
 }
 
+.admin-login-card {
+  margin-bottom: 16px;
+}
+
+.admin-login-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.admin-login-form input {
+  width: 100%;
+}
+
+.admin-auth-error {
+  margin-top: 12px;
+}
+
 .admin-header {
   display: flex;
   justify-content: space-between;
@@ -723,6 +742,10 @@ th {
   }
 
   .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-login-form {
     grid-template-columns: 1fr;
   }
 }

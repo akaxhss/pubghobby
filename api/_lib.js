@@ -28,6 +28,9 @@ export const skills = [
   'Game Sense'
 ];
 
+export const ADMIN_USERNAME = 'admin';
+export const ADMIN_PASSWORD = 'password';
+
 let pool;
 let initPromise;
 
@@ -179,6 +182,31 @@ export async function readJsonBody(req) {
 
   if (!body) return {};
   return JSON.parse(body);
+}
+
+export function isAdminAuthorized(req) {
+  const header = String(req.headers.authorization ?? '');
+  if (!header.startsWith('Basic ')) {
+    return false;
+  }
+
+  try {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
+    const separator = decoded.indexOf(':');
+    if (separator < 0) {
+      return false;
+    }
+
+    const username = decoded.slice(0, separator);
+    const password = decoded.slice(separator + 1);
+    return username === ADMIN_USERNAME && password === ADMIN_PASSWORD;
+  } catch {
+    return false;
+  }
+}
+
+export function sendAdminUnauthorized(res) {
+  return sendJson(res, 401, { error: 'Admin login required.' });
 }
 
 export async function getSession(sessionId) {

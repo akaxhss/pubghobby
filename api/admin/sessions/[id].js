@@ -1,4 +1,4 @@
-import { allowCors, ensureDatabase, resetSession, respondIfDatabaseMissing, sendJson } from '../../_lib.js';
+import { allowCors, ensureDatabase, isAdminAuthorized, resetSession, respondIfDatabaseMissing, sendAdminUnauthorized, sendJson } from '../../_lib.js';
 
 export default async function handler(req, res) {
   allowCors(res);
@@ -10,6 +10,10 @@ export default async function handler(req, res) {
 
   if (req.method !== 'DELETE') {
     return sendJson(res, 405, { error: 'Method not allowed.' });
+  }
+
+  if (!isAdminAuthorized(req)) {
+    return sendAdminUnauthorized(res);
   }
 
   if (respondIfDatabaseMissing(res)) {
