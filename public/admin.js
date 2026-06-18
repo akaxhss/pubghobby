@@ -33,8 +33,13 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-async function api(path) {
-  const response = await fetch(`${API_BASE}${path}`);
+async function api(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    ...options
+  });
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.error || 'Request failed');
