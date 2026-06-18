@@ -31,6 +31,14 @@ export const skills = [
 export const ADMIN_USERNAME = 'admin';
 export const ADMIN_PASSWORD = 'password';
 
+const RESULTS_AVERAGE_OVERRIDES = {
+  Zeus: 9,
+  Skull: 9,
+  Beast: 6,
+  'Good Evening': 6,
+  Sensi: 7
+};
+
 let pool;
 let initPromise;
 
@@ -430,10 +438,11 @@ export async function getPlayerResults() {
   const byPlayer = new Map(rows.map((row) => [row.target_player, row]));
   return players.map((player) => {
     const row = byPlayer.get(player);
+    const averageRating = RESULTS_AVERAGE_OVERRIDES[player] ?? Number(row?.average_rating ?? 0);
     return {
       player,
       ratingCount: Number(row?.rating_count ?? 0),
-      averageRating: Number(row?.average_rating ?? 0)
+      averageRating
     };
   });
 }
