@@ -388,10 +388,37 @@ export async function getAdminExport() {
   };
 }
 
-export async function deleteSession(sessionId) {
-  const { rows } = await queryDb(
-    'DELETE FROM sessions WHERE id = $1 RETURNING id, ign, self_player;',
-    [Number(sessionId)]
-  );
-  return rows[0] ?? null;
+export async function resetSession(sessionId) {
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: sessionRows } = await client.query(
+      'SELECT id, ign, self_player FROM sessions WHERE id = $1 LIMIT 1 FOR UPDATE;',
+      [Number(sessionId)]
+    );
+    const session = sessionRows[0];
+    if (!session) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    await client.query('DELETE FROM ratings WHERE session_id = $1;', [Number(sessionId)]);
+    await client.query(
+      `
+      UPDATE sessions
+      SET current_index = 0,
+          completed_at = NULL,
+          device_id = ''
+      WHERE id = $1;
+      `,
+      [Number(sessionId)]
+    );
+    await client.query('COMMIT');
+    return session;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }

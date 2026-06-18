@@ -99,19 +99,15 @@ async function selectSession(sessionId) {
   els.deleteSessionButton.disabled = false;
   els.deleteSessionButton.onclick = async () => {
     try {
-      const confirmed = confirm(`Delete session #${data.session.id} for ${data.session.ign}? This will free the selected ID.`);
+      const confirmed = confirm(`Delete entry for session #${data.session.id} and reset it to zero? The session will stay in the database.`);
       if (!confirmed) return;
 
       await api(`/api/admin/sessions/${encodeURIComponent(sessionId)}`, {
         method: 'DELETE'
       });
 
-      state.selectedSessionId = null;
-      els.sessionDetail.innerHTML = '<p class="muted">Select a session to see its ratings.</p>';
-      els.detailTitle.textContent = 'Select a session';
-      els.downloadSessionButton.disabled = true;
-      els.deleteSessionButton.disabled = true;
       await loadOverview({ skipAutoSelect: true });
+      await selectSession(sessionId);
     } catch (error) {
       alert(error.message);
     }

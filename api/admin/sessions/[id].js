@@ -1,4 +1,4 @@
-import { allowCors, deleteSession, ensureDatabase, respondIfDatabaseMissing, sendJson } from '../../_lib.js';
+import { allowCors, ensureDatabase, resetSession, respondIfDatabaseMissing, sendJson } from '../../_lib.js';
 
 export default async function handler(req, res) {
   allowCors(res);
@@ -23,10 +23,10 @@ export default async function handler(req, res) {
     return sendJson(res, 400, { error: 'sessionId is required.' });
   }
 
-  const deleted = await deleteSession(sessionId);
-  if (!deleted) {
+  const reset = await resetSession(sessionId);
+  if (!reset) {
     return sendJson(res, 404, { error: 'Session not found.' });
   }
 
-  return sendJson(res, 200, { deleted: true, sessionId: Number(sessionId) });
+  return sendJson(res, 200, { reset: true, sessionId: Number(sessionId) });
 }
