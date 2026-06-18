@@ -144,7 +144,7 @@ function renderSessionList(sessions) {
     deleteButton.addEventListener('click', async (event) => {
       event.stopPropagation();
       try {
-        const confirmed = confirm(`Delete entry for session #${session.id} and reset it to zero? The session will stay in the database.`);
+        const confirmed = confirm(`Delete session #${session.id}? This will remove it from the list and free the ID.`);
         if (!confirmed) return;
 
         await api(`/api/admin/sessions/${encodeURIComponent(session.id)}`, {
@@ -176,7 +176,7 @@ async function selectSession(sessionId) {
   els.deleteSessionButton.disabled = false;
   els.deleteSessionButton.onclick = async () => {
     try {
-      const confirmed = confirm(`Delete entry for session #${data.session.id} and reset it to zero? The session will stay in the database.`);
+      const confirmed = confirm(`Delete session #${data.session.id}? This will remove it from the list and free the ID.`);
       if (!confirmed) return;
 
       await api(`/api/admin/sessions/${encodeURIComponent(sessionId)}`, {

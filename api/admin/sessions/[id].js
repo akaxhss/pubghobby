@@ -1,4 +1,4 @@
-import { allowCors, ensureDatabase, isAdminAuthorized, resetSession, respondIfDatabaseMissing, sendAdminUnauthorized, sendJson } from '../../_lib.js';
+import { allowCors, deleteSession, ensureDatabase, isAdminAuthorized, respondIfDatabaseMissing, sendAdminUnauthorized, sendJson } from '../../_lib.js';
 
 export default async function handler(req, res) {
   allowCors(res);
@@ -28,13 +28,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reset = await resetSession(sessionId);
-    if (!reset) {
+    const deleted = await deleteSession(sessionId);
+    if (!deleted) {
       return sendJson(res, 404, { error: 'Session not found.' });
     }
 
-    return sendJson(res, 200, { reset: true, sessionId: Number(sessionId) });
+    return sendJson(res, 200, { deleted: true, sessionId: Number(sessionId) });
   } catch (error) {
-    return sendJson(res, 500, { error: error.message || 'Failed to reset session.' });
+    return sendJson(res, 500, { error: error.message || 'Failed to delete session.' });
   }
 }

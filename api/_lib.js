@@ -416,7 +416,7 @@ export async function getAdminExport() {
   };
 }
 
-export async function resetSession(sessionId) {
+export async function deleteSession(sessionId) {
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
@@ -430,17 +430,7 @@ export async function resetSession(sessionId) {
       return null;
     }
 
-    await client.query('DELETE FROM ratings WHERE session_id = $1;', [Number(sessionId)]);
-    await client.query(
-      `
-      UPDATE sessions
-      SET current_index = 0,
-          completed_at = NULL,
-          device_id = ''
-      WHERE id = $1;
-      `,
-      [Number(sessionId)]
-    );
+    await client.query('DELETE FROM sessions WHERE id = $1;', [Number(sessionId)]);
     await client.query('COMMIT');
     return session;
   } catch (error) {

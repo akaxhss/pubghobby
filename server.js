@@ -171,7 +171,7 @@ async function getSession(sessionId) {
   return rows[0] ?? null;
 }
 
-async function resetSession(sessionId) {
+async function deleteSession(sessionId) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -185,17 +185,7 @@ async function resetSession(sessionId) {
       return null;
     }
 
-    await client.query('DELETE FROM ratings WHERE session_id = $1;', [Number(sessionId)]);
-    await client.query(
-      `
-      UPDATE sessions
-      SET current_index = 0,
-          completed_at = NULL,
-          device_id = ''
-      WHERE id = $1;
-      `,
-      [Number(sessionId)]
-    );
+    await client.query('DELETE FROM sessions WHERE id = $1;', [Number(sessionId)]);
     await client.query('COMMIT');
     return session;
   } catch (error) {
@@ -506,13 +496,13 @@ async function handleApi(req, res, url) {
       return sendJson(res, 401, { error: 'Admin login required.' });
     }
     try {
-      const reset = await resetSession(adminDeleteMatch[1]);
-      if (!reset) {
+      const deleted = await deleteSession(adminDeleteMatch[1]);
+      if (!deleted) {
         return sendJson(res, 404, { error: 'Session not found.' });
       }
-      return sendJson(res, 200, { reset: true, sessionId: Number(adminDeleteMatch[1]) });
+      return sendJson(res, 200, { deleted: true, sessionId: Number(adminDeleteMatch[1]) });
     } catch (error) {
-      return sendJson(res, 500, { error: error.message || 'Failed to reset session.' });
+      return sendJson(res, 500, { error: error.message || 'Failed to delete session.' });
     }
   }
 
