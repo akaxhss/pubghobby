@@ -3,95 +3,233 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tourney Rater</title>
-    <link rel="stylesheet" href="./styles.css?v=7" />
+    <title>WOW League | Tournament Dashboard</title>
+    <link rel="stylesheet" href="./styles.css?v=25" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   </head>
-  <body>
+  <body class="dashboard-body league-v2-theme">
     <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
-    <div class="shell">
-      <aside class="rail">
-        <div class="brand">
-          <div class="brand-mark">TR</div>
-          <div>
-            <div class="eyebrow">Tourney</div>
-            <h1>Player Rater</h1>
+
+    <!-- Top Navigation Header -->
+    <header class="v2-header">
+      <div class="header-left">
+        <div class="v2-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+          <span class="v2-logo-text">WOW LEAGUE</span>
+        </div>
+        <div class="v2-divider"></div>
+        <h1 class="v2-title">TOURNAMENT DASHBOARD</h1>
+        <div class="live-status-pill">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Spotlight / Tournament Selection Bar -->
+    <section class="v2-spotlight-bar">
+      <div class="spotlight-inner">
+        <span class="spotlight-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="label-icon">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+          Select Tournament:
+        </span>
+        <div class="v2-tournament-selector" id="activeTournamentList">
+          <!-- Populated dynamically by JS -->
+          <span class="loading-placeholder">Loading tournaments...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Grid Workspace -->
+    <main class="v2-grid-shell">
+
+      <!-- HERO TOURNAMENT INFO CARD & METADATA -->
+      <section class="v2-hero-panel">
+        <div class="hero-panel-glow"></div>
+        <div class="hero-details">
+          <span class="v2-eyebrow">Spotlight Feature</span>
+          <h2 id="featuredTournamentName" class="hero-tournament-title">Loading Tournament...</h2>
+          <p id="featuredTournamentNotes" class="hero-tournament-notes">Establishing data stream from live servers. Player scores and match stats will populate momentarily.</p>
+        </div>
+        <div class="hero-stats-strip" id="featuredStatsStrip">
+          <div class="v2-stat-card">
+            <span class="stat-label">Teams</span>
+            <strong id="featuredTeamCount" class="stat-value">-</strong>
+          </div>
+          <div class="v2-stat-card">
+            <span class="stat-label">Players</span>
+            <strong id="featuredPlayerCount" class="stat-value">-</strong>
+          </div>
+          <div class="v2-stat-card">
+            <span class="stat-label">Matches</span>
+            <strong id="featuredMatchCount" class="stat-value">-</strong>
+          </div>
+          <div class="v2-stat-card">
+            <span class="stat-label">Finished</span>
+            <strong id="featuredFinishedCount" class="stat-value">-</strong>
+          </div>
+          <div class="v2-stat-card highlight">
+            <span class="stat-label">Game Mode</span>
+            <strong id="featuredMode" class="stat-value">-</strong>
+          </div>
+          <div class="v2-stat-card highlight">
+            <span class="stat-label">Status</span>
+            <strong id="featuredStatus" class="stat-value">-</strong>
           </div>
         </div>
-        <p class="rail-copy">
-          First select your own ID, then rate the other 14 players one at a time, five skills per player, each on a 10-point scale.
-        </p>
-        <div class="player-list" id="playerList"></div>
-      </aside>
+      </section>
 
-      <main class="main">
-        <section class="card login-card" id="loginCard">
-          <div class="card-head">
-            <span class="step">Step 1</span>
-            <h2>Select your ID</h2>
-          </div>
-          <div class="id-picker-wrap">
-            <div class="id-picker-label">Select your ID</div>
-            <div class="id-picker" id="idPicker"></div>
-          </div>
-          <div class="login-actions">
-            <button type="button" id="startRatingButton" disabled>Start rating</button>
-          </div>
-        </section>
+      <!-- 3-COLUMN CONTENT GRID -->
+      <div class="v2-three-columns">
 
-        <section class="card survey-card hidden" id="surveyCard">
-          <div class="topline">
+        <!-- COLUMN 1: STANDINGS (LEADERBOARD) -->
+        <section class="v2-col standings-col animate-slide-up" style="--delay: 1;">
+          <div class="col-header">
+            <div class="col-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+                <path d="M12 2a4 4 0 0 1 4 4v7.3a4.8 4.8 0 0 1-8 0V6a4 4 0 0 1 4-4Z" />
+              </svg>
+            </div>
             <div>
-              <span class="step">Step 2</span>
-              <h2 id="currentPlayerTitle">Player</h2>
+              <h3>Team Standings</h3>
+              <p class="col-subtitle">Overall tournament leaderboard</p>
             </div>
-            <div class="meta" id="sessionMeta"></div>
           </div>
-          <div class="session-banner" id="sessionBanner"></div>
-
-          <div class="progress-wrap">
-            <div class="progress-labels">
-              <span id="progressText">0 of 0 completed</span>
-              <span id="progressPercent">0%</span>
+          <div class="v2-card-body">
+            <div class="table-responsive">
+              <table class="v2-table" id="standingsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 70px;">Rank</th>
+                    <th>Team</th>
+                    <th class="text-center">Matches</th>
+                    <th class="text-center">Record (W-D-L)</th>
+                    <th class="text-center">Diff</th>
+                    <th class="text-center" style="width: 90px;">Form Trend</th>
+                    <th class="text-right">Total Points</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboardList">
+                  <!-- Dynamic Rows -->
+                </tbody>
+              </table>
             </div>
-            <div class="progress-bar"><div id="progressFill"></div></div>
-          </div>
-
-          <form id="ratingForm" class="rating-form">
-            <div id="skillRows"></div>
-            <div class="review-actions">
-              <button type="button" id="prevButton" class="ghost-button">Previous Player</button>
-              <button type="button" id="nextReviewButton" class="ghost-button">Next Player</button>
-            </div>
-            <div class="actions">
-              <button type="submit" id="nextButton">Save</button>
-            </div>
-          </form>
-
-          <div class="done hidden" id="donePanel">
-            <h3>All players saved</h3>
-            <p>The session is complete. Please hand the device to the next person.</p>
           </div>
         </section>
-      </main>
-    </div>
 
-    <template id="skillTemplate">
-      <div class="skill-row">
-        <div class="skill-label"></div>
-        <div class="stars" role="radiogroup"></div>
+        <!-- COLUMN 2: TOP PERFORMERS (PLAYER STATS) -->
+        <section class="v2-col players-col animate-slide-up" style="--delay: 2;">
+          <div class="col-header">
+            <div class="col-header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="6" />
+                <circle cx="12" cy="12" r="2" />
+              </svg>
+            </div>
+            <div>
+              <h3>Top Performers</h3>
+              <p class="col-subtitle">Individual player performance</p>
+            </div>
+          </div>
+          <div class="v2-card-body">
+            <div class="table-responsive">
+              <table class="v2-table" id="playersTable">
+                <thead>
+                  <tr>
+                    <th style="width: 70px;">Rank</th>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th class="text-center">Games</th>
+                    <th class="text-center">Kills</th>
+                    <th class="text-center">Damage</th>
+                    <th class="text-center">MVPs</th>
+                  </tr>
+                </thead>
+                <tbody id="playerStatsList">
+                  <!-- Dynamic Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- COLUMN 3: SIDE STATS (MVP / RECENT RESULTS / ACTIVITY) -->
+        <section class="v2-col side-col animate-slide-up" style="--delay: 3;">
+
+          <!-- MVP Highlight Card -->
+          <div class="mvp-highlight-card" id="mvpHighlightCard">
+            <!-- Dynamic MVP Card Content -->
+          </div>
+
+          <!-- Recent Matches Section -->
+          <div class="v2-sub-section">
+            <div class="sub-col-header">
+              <span class="sub-icon">⚔️</span>
+              <h4>Recent Matches</h4>
+            </div>
+            <div class="match-results-list" id="matchResultsList">
+              <!-- Dynamic Match Cards -->
+            </div>
+          </div>
+
+          <!-- Activity Log Feed -->
+          <div class="v2-sub-section">
+            <div class="sub-col-header">
+              <span class="sub-icon">📡</span>
+              <h4>Pulse Activity Feed</h4>
+            </div>
+            <div class="activity-feed" id="recentActivityList">
+              <!-- Dynamic Activity Log -->
+            </div>
+          </div>
+
+        </section>
+
       </div>
-    </template>
+    </main>
 
-    <div class="loading-overlay hidden" id="loadingOverlay" aria-live="polite" aria-busy="true">
-      <div class="loading-card">
-        <div class="loading-spinner"></div>
-        <div>
-          <div class="loading-title" id="loadingTitle">Loading</div>
-          <div class="loading-copy" id="loadingCopy">Please wait...</div>
+    <!-- Footer Status Bar -->
+    <footer class="v2-footer">
+      <div class="footer-left">
+        <span>WOW League Scorer Platform</span>
+        <span class="footer-dot"></span>
+        <span id="footerServerTime">Server Time: --:--:--</span>
+      </div>
+      <div class="footer-right">
+        <span class="db-status-pill">
+          <span class="status-indicator-dot online"></span>
+          <span>Feed Status: Online</span>
+        </span>
+        <span class="footer-copyright">Website is created by FDK (aka:IGN-GoodNight)</span>
+        <span class="footer-copyright">© 2026 WOW League. All rights reserved.</span>
+      </div>
+    </footer>
+
+    <!-- Loading Screen Overlay -->
+    <div class="v2-loading-overlay hidden" id="dashboardLoadingOverlay" aria-live="polite" aria-busy="true">
+      <div class="v2-loading-card">
+        <div class="v2-spinner"></div>
+        <div class="v2-loading-text">
+          <h3 id="dashboardLoadingTitle">Syncing Database</h3>
+          <p id="dashboardLoadingCopy">Updating esports analytics...</p>
         </div>
       </div>
     </div>
 
-    <script src="./app.js?v=16" type="module"></script>
+    <script src="./dashboard.js?v=25" type="module"></script>
   </body>
 </html>

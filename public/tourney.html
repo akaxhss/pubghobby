@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PubgTournamentScorer | Tourney</title>
+    <link rel="stylesheet" href="./styles.css?v=29" />
+  </head>
+  <body class="tourney-body">
+    <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
+    <main class="tourney-shell">
+      <section class="card admin-login-card tourney-login-card" id="tourneyLoginCard">
+        <div class="card-head">
+          <div>
+            <span class="step">Admin Login</span>
+            <h1>Tourney dashboard</h1>
+            
+          </div>
+        </div>
+        <form class="admin-login-form" id="tourneyLoginForm">
+          <input id="tourneyUsername" type="text" autocomplete="username" placeholder="Username" value="admin" />
+          <input id="tourneyPassword" type="password" autocomplete="current-password" placeholder="Password" />
+          <button type="submit">Log in</button>
+        </form>
+        <p class="admin-auth-error muted hidden" id="tourneyLoginError"></p>
+      </section>
+
+      <section class="tourney-dashboard hidden" id="tourneyDashboard">
+        <header class="admin-header tourney-header">
+          <div>
+            <div class="eyebrow">Tourney</div>
+            <h1>PubgTournamentScorer</h1>
+            <p class="admin-subtitle">Manage the tournament workflow from one place: setup, roster, schedule, and results.</p>
+          </div>
+          <div class="admin-actions">
+            <a class="admin-link" href="/rater">Open rater</a>
+            <a class="admin-link" href="/results">Open results</a>
+            <a class="admin-link" href="/admin">Open admin</a>
+            <button id="tourneyRefreshButton" type="button">Refresh</button>
+            <button id="tourneyLogoutButton" type="button" class="ghost-button">Log out</button>
+          </div>
+        </header>
+
+        <section class="tourney-hero-card">
+          <div class="tourney-hero-copy">
+            <span class="step">Tournament control center</span>
+            <h2>One dashboard for setup, live match entry, and post-match insight.</h2>
+            <p>
+              Create the tournament, attach teams, assign players, schedule matches, and record kills, damage, and MVPs
+              without losing the bigger picture.
+            </p>
+            <div class="tourney-hero-chip-row">
+              <span class="tourney-chip">Setup</span>
+              <span class="tourney-chip">Teams</span>
+              <span class="tourney-chip">Players</span>
+              <span class="tourney-chip">Matches</span>
+              <span class="tourney-chip">Insights</span>
+            </div>
+          </div>
+          <div class="tourney-hero-metrics">
+            <div class="hero-metric"><span>Tournaments</span><strong id="tourneyCountHero">0</strong></div>
+            <div class="hero-metric"><span>Teams</span><strong id="teamCountHero">0</strong></div>
+            <div class="hero-metric"><span>Players</span><strong id="playerCountHero">0</strong></div>
+            <div class="hero-metric"><span>Matches</span><strong id="matchCountHero">0</strong></div>
+          </div>
+        </section>
+
+        <section class="admin-grid tourney-stats">
+          <div class="card stat-card"><span class="step">Tournaments</span><strong id="tourneyCount">0</strong></div>
+          <div class="card stat-card"><span class="step">Teams</span><strong id="teamCount">0</strong></div>
+          <div class="card stat-card"><span class="step">Players</span><strong id="playerCount">0</strong></div>
+          <div class="card stat-card"><span class="step">Matches</span><strong id="matchCount">0</strong></div>
+        </section>
+
+        <section class="tourney-layout">
+          <article class="card tourney-panel tourney-panel--setup">
+            <div class="card-head">
+              <div>
+                <span class="step">Tournament</span>
+                <h2>Setup and selection</h2>
+              </div>
+            </div>
+            <form class="stacked-form" id="createTournamentForm">
+              <div class="form-grid two-up">
+                <label class="field">
+                  <span>Tournament name</span>
+                  <input id="tournamentName" name="name" placeholder="Tournament name" required />
+                </label>
+                <label class="field">
+                  <span>Mode</span>
+                  <input id="tournamentMode" name="mode" placeholder="Mode" value="WOW" />
+                </label>
+                <label class="field">
+                  <span>Status</span>
+                  <select id="tournamentStatus" name="status">
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="completed">completed</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Start time</span>
+                  <input id="tournamentStartAt" name="startAt" type="datetime-local" />
+                </label>
+              </div>
+              <label class="field">
+                <span>Notes</span>
+                <input id="tournamentNotes" name="notes" placeholder="Notes" />
+              </label>
+              <button type="submit" class="wide-action">Create tournament</button>
+            </form>
+            <div class="list-block" id="tournamentList"></div>
+          </article>
+
+          <article class="card tourney-panel tourney-panel--teams">
+            <div class="card-head">
+              <div>
+                <span class="step">Teams</span>
+                <h2>Roster groups</h2>
+              </div>
+            </div>
+            <form class="stacked-form" id="createTeamForm">
+              <div class="form-grid two-up">
+                <label class="field">
+                  <span>Team name</span>
+                  <input id="teamName" name="name" placeholder="Team name" required />
+                </label>
+                <label class="field">
+                  <span>Tag</span>
+                  <input id="teamTag" name="tag" placeholder="Tag" />
+                </label>
+                <label class="field">
+                  <span>Captain</span>
+                  <input id="teamCaptain" name="captainName" placeholder="Captain" />
+                </label>
+                <label class="field">
+                  <span>Color</span>
+                  <input id="teamColor" name="color" placeholder="Color" />
+                </label>
+              </div>
+              <button type="submit" class="wide-action">Add team</button>
+            </form>
+            <div class="list-block" id="teamList"></div>
+          </article>
+
+          <article class="card tourney-panel tourney-panel--players">
+            <div class="card-head">
+              <div>
+                <span class="step">Players</span>
+                <h2>Team members</h2>
+              </div>
+            </div>
+            <form class="stacked-form" id="createPlayerForm">
+              <div class="form-grid two-up">
+                <label class="field">
+                  <span>Player IGN</span>
+                  <input id="playerIgn" name="ign" placeholder="Player IGN" required />
+                </label>
+                <label class="field">
+                  <span>Team</span>
+                  <select id="playerTeam" name="teamId"></select>
+                </label>
+                <label class="field">
+                  <span>Role</span>
+                  <input id="playerRole" name="role" placeholder="Role" value="Player" />
+                </label>
+                <label class="field field-switch">
+                  <span>Active</span>
+                  <label class="toggle-field">
+                    <input id="playerActive" name="isActive" type="checkbox" checked />
+                    <span>Active</span>
+                  </label>
+                </label>
+              </div>
+              <button type="submit" class="wide-action">Add player</button>
+            </form>
+            <div class="list-block" id="playerList"></div>
+          </article>
+
+          <article class="card tourney-panel tourney-panel--matches wide">
+            <div class="card-head">
+              <div>
+                <span class="step">Matches</span>
+                <h2>Schedule and results</h2>
+              </div>
+            </div>
+            <form class="stacked-form" id="createMatchForm">
+              <div class="form-grid match-grid">
+                <label class="field">
+                  <span>Match #</span>
+                  <input id="matchNo" name="matchNo" type="number" min="1" placeholder="Match #" value="1" />
+                </label>
+                <label class="field">
+                  <span>Round / stage</span>
+                  <input id="matchRound" name="roundName" placeholder="Round / stage" value="Group Stage" />
+                </label>
+                <label class="field">
+                  <span>Team A</span>
+                  <select id="matchTeamA" name="teamAId"></select>
+                </label>
+                <label class="field">
+                  <span>Team B</span>
+                  <select id="matchTeamB" name="teamBId"></select>
+                </label>
+                <label class="field">
+                  <span>Room code</span>
+                  <input id="matchRoomCode" name="roomCode" placeholder="Room code" />
+                </label>
+                <label class="field">
+                  <span>Scheduled at</span>
+                  <input id="matchScheduledAt" name="scheduledAt" type="datetime-local" />
+                </label>
+                <label class="field">
+                  <span>Status</span>
+                  <select id="matchStatus" name="status">
+                    <option value="scheduled">scheduled</option>
+                    <option value="live">live</option>
+                    <option value="finished">finished</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Team A score</span>
+                  <input id="matchTeamAScore" name="teamAScore" type="number" placeholder="A score" />
+                </label>
+                <label class="field">
+                  <span>Team B score</span>
+                  <input id="matchTeamBScore" name="teamBScore" type="number" placeholder="B score" />
+                </label>
+                <label class="field">
+                  <span>Winner</span>
+                  <select id="matchWinner" name="winnerTeamId"></select>
+                </label>
+                <label class="field field-wide">
+                  <span>Match notes</span>
+                  <input id="matchNotes" name="notes" placeholder="Match notes" />
+                </label>
+              </div>
+              <button type="submit" class="wide-action">Schedule match</button>
+            </form>
+            <div class="list-block" id="matchList"></div>
+          </article>
+
+          <article class="card tourney-panel tourney-panel--insights wide">
+            <div class="card-head">
+              <div>
+                <span class="step">Insights</span>
+                <h2>Round history, profiles, certificates, and leaderboards</h2>
+              </div>
+            </div>
+            <div class="insight-grid">
+              <section class="insight-card insight-card--rounds">
+                <div class="insight-head">
+                  <h3>Round history</h3>
+                  <span class="muted" id="roundHistoryCount">0 rounds</span>
+                </div>
+                <div class="insight-list" id="roundHistoryList"></div>
+              </section>
+
+              <section class="insight-card insight-card--profiles">
+                <div class="insight-head">
+                  <h3>Player profiles</h3>
+                  <span class="muted" id="playerProfileCount">0 players</span>
+                </div>
+                <div class="insight-list" id="playerProfileList"></div>
+              </section>
+
+              <section class="insight-card insight-card--certificates">
+                <div class="insight-head">
+                  <h3>Certificates</h3>
+                  <span class="muted" id="certificateCount">0 certificates</span>
+                </div>
+                <div class="insight-list" id="certificateList"></div>
+              </section>
+
+              <section class="insight-card insight-card--leaderboard">
+                <div class="insight-head">
+                  <h3>Leaderboards</h3>
+                  <span class="muted" id="leaderboardCount">0 teams</span>
+                </div>
+                <div class="insight-list" id="leaderboardList"></div>
+              </section>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <div class="loading-overlay hidden" id="tourneyLoadingOverlay" aria-live="polite" aria-busy="true">
+      <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <div>
+          <div class="loading-title" id="tourneyLoadingTitle">Loading</div>
+          <div class="loading-copy" id="tourneyLoadingCopy">Please wait...</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./tourney.js?v=7" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tourney Rater</title>
+    <link rel="stylesheet" href="./styles.css?v=15" />
+  </head>
+  <body>
+    <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
+    <div class="shell">
+      <aside class="rail">
+        <div class="brand">
+          <div class="brand-mark">TR</div>
+          <div>
+            <div class="eyebrow">Tourney</div>
+            <h1>Player Rater</h1>
+          </div>
+        </div>
+        <p class="rail-copy">
+          First select your own ID, then rate the other 14 players one at a time, five skills per player, each on a 10-point scale.
+        </p>
+        <div class="rail-actions">
+          <a class="admin-link" href="/">Open dashboard</a>
+          <a class="admin-link" href="/tourney">Open tourney hub</a>
+        </div>
+        <div class="player-list" id="playerList"></div>
+      </aside>
+
+      <main class="main">
+        <section class="card login-card" id="loginCard">
+          <div class="card-head">
+            <span class="step">Step 1</span>
+            <h2>Select your ID</h2>
+          </div>
+          <div class="id-picker-wrap">
+            <div class="id-picker-label">Select your ID</div>
+            <div class="id-picker" id="idPicker"></div>
+          </div>
+          <div class="login-actions">
+            <button type="button" id="startRatingButton" disabled>Start rating</button>
+          </div>
+        </section>
+
+        <section class="card survey-card hidden" id="surveyCard">
+          <div class="topline">
+            <div>
+              <span class="step">Step 2</span>
+              <h2 id="currentPlayerTitle">Player</h2>
+            </div>
+            <div class="meta" id="sessionMeta"></div>
+          </div>
+          <div class="session-banner" id="sessionBanner"></div>
+
+          <div class="progress-wrap">
+            <div class="progress-labels">
+              <span id="progressText">0 of 0 completed</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar"><div id="progressFill"></div></div>
+          </div>
+
+          <form id="ratingForm" class="rating-form">
+            <div id="skillRows"></div>
+            <div class="review-actions">
+              <button type="button" id="prevButton" class="ghost-button">Previous Player</button>
+              <button type="button" id="nextReviewButton" class="ghost-button">Next Player</button>
+            </div>
+            <div class="actions">
+              <button type="submit" id="nextButton">Save</button>
+            </div>
+          </form>
+
+          <div class="done hidden" id="donePanel">
+            <h3>All players saved</h3>
+            <p>The session is complete. Please hand the device to the next person.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="skillTemplate">
+      <div class="skill-row">
+        <div class="skill-label"></div>
+        <div class="stars" role="radiogroup"></div>
+      </div>
+    </template>
+
+    <div class="loading-overlay hidden" id="loadingOverlay" aria-live="polite" aria-busy="true">
+      <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <div>
+          <div class="loading-title" id="loadingTitle">Loading</div>
+          <div class="loading-copy" id="loadingCopy">Please wait...</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js?v=17" type="module"></script>
+  </body>
+</html>

@@ -121,6 +121,77 @@ export async function ensureDatabase() {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
       `);
+
+      await queryDb(`
+        CREATE TABLE IF NOT EXISTS tourney_tournaments (
+          id BIGSERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          mode TEXT NOT NULL DEFAULT 'WOW',
+          status TEXT NOT NULL DEFAULT 'draft',
+          notes TEXT NOT NULL DEFAULT '',
+          start_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
+
+      await queryDb(`
+        CREATE TABLE IF NOT EXISTS tourney_teams (
+          id BIGSERIAL PRIMARY KEY,
+          tournament_id BIGINT NOT NULL REFERENCES tourney_tournaments(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          tag TEXT NOT NULL DEFAULT '',
+          captain_name TEXT NOT NULL DEFAULT '',
+          color TEXT NOT NULL DEFAULT '',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
+
+      await queryDb(`
+        CREATE TABLE IF NOT EXISTS tourney_players (
+          id BIGSERIAL PRIMARY KEY,
+          tournament_id BIGINT NOT NULL REFERENCES tourney_tournaments(id) ON DELETE CASCADE,
+          team_id BIGINT REFERENCES tourney_teams(id) ON DELETE SET NULL,
+          ign TEXT NOT NULL,
+          role TEXT NOT NULL DEFAULT 'Player',
+          is_active BOOLEAN NOT NULL DEFAULT TRUE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
+
+      await queryDb(`
+        CREATE TABLE IF NOT EXISTS tourney_matches (
+          id BIGSERIAL PRIMARY KEY,
+          tournament_id BIGINT NOT NULL REFERENCES tourney_tournaments(id) ON DELETE CASCADE,
+          match_no INTEGER NOT NULL DEFAULT 1,
+          round_name TEXT NOT NULL DEFAULT 'Group Stage',
+          room_code TEXT NOT NULL DEFAULT '',
+          status TEXT NOT NULL DEFAULT 'scheduled',
+          scheduled_at TIMESTAMPTZ,
+          team_a_id BIGINT REFERENCES tourney_teams(id) ON DELETE SET NULL,
+          team_b_id BIGINT REFERENCES tourney_teams(id) ON DELETE SET NULL,
+          team_a_score INTEGER,
+          team_b_score INTEGER,
+          winner_team_id BIGINT REFERENCES tourney_teams(id) ON DELETE SET NULL,
+          notes TEXT NOT NULL DEFAULT '',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
+
+      await queryDb(`
+        CREATE TABLE IF NOT EXISTS tourney_match_player_stats (
+          id BIGSERIAL PRIMARY KEY,
+          match_id BIGINT NOT NULL REFERENCES tourney_matches(id) ON DELETE CASCADE,
+          player_id BIGINT REFERENCES tourney_players(id) ON DELETE SET NULL,
+          player_name TEXT NOT NULL,
+          team_id BIGINT REFERENCES tourney_teams(id) ON DELETE SET NULL,
+          team_name TEXT NOT NULL DEFAULT '',
+          kills INTEGER NOT NULL DEFAULT 0,
+          damage INTEGER NOT NULL DEFAULT 0,
+          is_mvp BOOLEAN NOT NULL DEFAULT FALSE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
     })();
   }
 
@@ -413,6 +484,22 @@ export async function getAdminOverview() {
 }
 
 export async function getAdminExport() {
+  const tournaments = (await queryDb(`
+    SELECT * FROM tourney_tournaments ORDER BY created_at DESC, id DESC;
+  `)).rows;
+  const teams = (await queryDb(`
+    SELECT * FROM tourney_teams ORDER BY created_at ASC, id ASC;
+  `)).rows;
+  const playersRows = (await queryDb(`
+    SELECT * FROM tourney_players ORDER BY created_at ASC, id ASC;
+  `)).rows;
+  const matches = (await queryDb(`
+    SELECT * FROM tourney_matches ORDER BY created_at ASC, id ASC;
+  `)).rows;
+  const matchPlayerStats = (await queryDb(`
+    SELECT * FROM tourney_match_player_stats ORDER BY created_at ASC, id ASC;
+  `)).rows;
+
   return {
     exportedAt: new Date().toISOString(),
     sessions: await getSessionSummaries(),
@@ -420,7 +507,14 @@ export async function getAdminExport() {
       SELECT session_id, target_player, skill, rating, created_at
       FROM ratings
       ORDER BY id ASC;
-    `)).rows
+    `)).rows,
+    tourney: {
+      tournaments,
+      teams,
+      players: playersRows,
+      matches,
+      matchPlayerStats
+    }
   };
 }
 

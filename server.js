@@ -4,6 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
 import pg from 'pg';
+import tourneyHandler from './api/tourney.js';
+import publicDashboardHandler from './api/public-dashboard.js';
 
 const { Pool } = pg;
 
@@ -251,6 +253,16 @@ async function getPlayerResults() {
 }
 
 async function handleApi(req, res, url) {
+  if (url.pathname.startsWith('/api/tourney')) {
+    await tourneyHandler(req, res);
+    return true;
+  }
+
+  if (url.pathname.startsWith('/api/dashboard')) {
+    await publicDashboardHandler(req, res);
+    return true;
+  }
+
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
@@ -564,6 +576,8 @@ function readJsonBody(req) {
 function sendStatic(req, res, url) {
   const pathname =
     url.pathname === '/' ? '/index.html' :
+    url.pathname === '/rater' ? '/rater.html' :
+    url.pathname === '/tourney' ? '/tourney.html' :
     url.pathname === '/admin' ? '/admin.html' :
     url.pathname === '/results' ? '/results.html' :
     url.pathname;
