@@ -3,20 +3,12 @@
     "name": "Raid Team",
     "captainName": "Raid",
     "totalPoints": 50,
-    "purchasePoints": 30,
-    "remainingPoints": 20,
+    "purchasePoints": 15,
+    "remainingPoints": 35,
     "players": [
       {
         "name": "Ryzen",
         "price": 15
-      },
-      {
-        "name": "Evie",
-        "price": 8
-      },
-      {
-        "name": "Sensi",
-        "price": 7
       }
     ]
   },
@@ -24,30 +16,16 @@
     "name": "Valky Team",
     "captainName": "Valky",
     "totalPoints": 50,
-    "purchasePoints": 14,
-    "remainingPoints": 36,
-    "players": [
-      {
-        "name": "Skull",
-        "price": 14
-      }
-    ]
+    "purchasePoints": 0,
+    "remainingPoints": 50,
+    "players": []
   },
   {
     "name": "Akash Team",
     "captainName": "Akash",
     "totalPoints": 50,
-    "purchasePoints": 30,
-    "remainingPoints": 20,
-    "players": [
-      {
-        "name": "Good Morning",
-        "price": 10
-      },
-      {
-        "name": "Ryzen",
-        "price": 20
-      }
-    ]
+    "purchasePoints": 0,
+    "remainingPoints": 50,
+    "players": []
   }
 ]
