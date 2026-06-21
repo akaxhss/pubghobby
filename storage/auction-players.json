@@ -6,8 +6,9 @@
     "status": "sold",
     "soldTo": "Valky Team",
     "purchasedPoint": 14,
-    "image": "",
-    "currentBid": 14
+    "image": "/media/ac4107dc-b4fd-4a7d-8a74-14ee2863fd24-1782062145301-ymuhm8hc.png",
+    "currentBid": 14,
+    "isReserved": true
   },
   {
     "name": "Zeus",
@@ -27,8 +28,9 @@
     "status": "sold",
     "soldTo": "Qatar Team",
     "purchasedPoint": 8,
-    "image": "",
-    "currentBid": 8
+    "image": "/media/24b11b80-e621-40e5-813e-976ed835dda0-1782061990852-icazn2s3.png",
+    "currentBid": 8,
+    "isReserved": false
   },
   {
     "name": "Joby",
@@ -47,8 +49,9 @@
     "status": "sold",
     "soldTo": "Akash Team",
     "purchasedPoint": 20,
-    "image": "",
-    "currentBid": 20
+    "image": "/media/2eb2ee13-8560-455b-ba9d-fa45f6286d55-1782062128489-mf7u9ssc.png",
+    "currentBid": 20,
+    "isReserved": true
   },
   {
     "name": "Good Morning",
@@ -57,8 +60,9 @@
     "status": "sold",
     "soldTo": "Akash Team",
     "purchasedPoint": 10,
-    "image": "",
-    "currentBid": 10
+    "image": "/media/4bb760b3-74c0-4e97-86d6-c94e7db21652-1782062058041-2oxs45sp.png",
+    "currentBid": 10,
+    "isReserved": false
   },
   {
     "name": "Sensi",
@@ -67,8 +71,9 @@
     "status": "sold",
     "soldTo": "Raid Team",
     "purchasedPoint": 7,
-    "image": "",
-    "currentBid": 7
+    "image": "/media/9a779221-570b-4dd2-999a-2c0547713a08-1782062031002-zkpkm0ly.png",
+    "currentBid": 7,
+    "isReserved": false
   },
   {
     "name": "Valak",
@@ -77,8 +82,9 @@
     "status": "available",
     "soldTo": "",
     "purchasedPoint": null,
-    "image": "",
-    "currentBid": 7
+    "image": "/media/20a32e7b-9857-409f-996e-c9ee21026695-1782062040849-yzju8foz.png",
+    "currentBid": 7,
+    "isReserved": false
   },
   {
     "name": "Beast",
@@ -87,7 +93,7 @@
     "status": "sold",
     "soldTo": "",
     "purchasedPoint": 12,
-    "image": "",
+    "image": "/media/d28bbbd4-8d7e-4b42-873b-7f3a5d17d783-1782062015496-kvgssqhx.png",
     "currentBid": 6,
     "isReserved": false
   },
@@ -98,8 +104,9 @@
     "status": "available",
     "soldTo": "",
     "purchasedPoint": null,
-    "image": "",
-    "currentBid": 6
+    "image": "/media/5b153f7b-d915-4b8d-b39c-62adf74a6b5c-1782062001255-zcfyfikc.png",
+    "currentBid": 6,
+    "isReserved": false
   },
   {
     "name": "Soul",
@@ -108,7 +115,7 @@
     "status": "available",
     "soldTo": "",
     "purchasedPoint": null,
-    "image": "",
+    "image": "/media/c326d236-82af-42a3-b49f-c15d4656883f-1782062008616-n9pqvtx2.png",
     "currentBid": 6,
     "isReserved": false
   },
@@ -119,8 +126,9 @@
     "status": "available",
     "soldTo": "",
     "purchasedPoint": null,
-    "image": "",
-    "currentBid": 6
+    "image": "/media/65f4d861-ce31-4943-b5a5-e5e2895d05a3-1782062072422-8o1ow8dt.png",
+    "currentBid": 6,
+    "isReserved": false
   },
   {
     "name": "Hyper",
