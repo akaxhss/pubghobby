@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WOW League | PUBG Auction</title>
+    <link rel="stylesheet" href="./styles.css?v=35" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="auction-body dashboard-body">
+    <canvas id="meshBackground" class="mesh-background" aria-hidden="true"></canvas>
+
+    <header class="auction-header">
+      <div class="auction-brand">
+        <div class="auction-brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+        </div>
+        <div>
+          <div class="auction-brand-kicker">WOW League</div>
+          <strong>PUBG Auction</strong>
+        </div>
+      </div>
+      <div class="auction-header-links">
+        <span class="auction-live-pill"><span class="live-dot"></span> LIVE</span>
+        <a href="/" class="auction-nav-link">Dashboard</a>
+        <a href="/tourney" class="auction-nav-link">Tourney</a>
+        <a href="/results" class="auction-nav-link">Results</a>
+        <a href="/auctionadmin" class="auction-nav-link auction-nav-link--gold">Auction Admin</a>
+      </div>
+    </header>
+
+    <main class="auction-shell">
+      <section class="auction-hero card auction-panel">
+        <div class="auction-hero-copy">
+          <span class="step">Spotlight Feature</span>
+          <h1>PUBG Auction</h1>
+          <p>
+            Live player auction, team purse
+          </p>
+          <div class="auction-meta-row">
+            <span class="auction-chip">12 auction players</span>
+            <span class="auction-chip">3 teams</span>
+            <span class="auction-chip">Live bidding</span>
+            <span class="auction-chip">Wheel order ready</span>
+          </div>
+        </div>
+
+        <div class="auction-spotlight">
+          <div class="auction-spotlight-live">
+            <span><span class="live-dot"></span> Live now</span>
+            <div class="auction-spotlight-live-layout">
+              <div class="auction-spotlight-live-copy">
+                <strong id="auctionCurrentPlayerName">Ryzen</strong>
+                <p id="auctionCurrentPlayerStatus">Status: Live Auction</p>
+              </div>
+              <div class="auction-spotlight-live-avatar" id="auctionSpotlightAvatar">R</div>
+            </div>
+          </div>
+          <div class="auction-spotlight-grid">
+            <div class="auction-mini-card">
+              <span>Base price</span>
+              <strong id="auctionCurrentBase">9L</strong>
+            </div>
+            <div class="auction-mini-card">
+              <span>Current bid</span>
+              <strong id="auctionCurrentBid">15L</strong>
+            </div>
+            <div class="auction-mini-card">
+              <span>Team</span>
+              <strong id="auctionCurrentTeam">Qatar Team</strong>
+            </div>
+            <div class="auction-mini-card">
+              <span>Status</span>
+              <strong id="auctionCurrentState">Highlighted</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="auction-summary-row" id="auctionSummaryCards"></section>
+
+      <section class="auction-team-strip card auction-panel">
+        <div class="card-head auction-panel-head">
+          <div>
+            <span class="step">Team Purse</span>
+            <h2>Three-team purse overview</h2>
+          </div>
+        </div>
+        <div class="auction-team-grid" id="auctionTeamPurse"></div>
+      </section>
+
+      <section class="auction-workspace">
+        <div class="auction-left-column">
+          <article class="card auction-panel">
+            <div class="card-head auction-panel-head">
+              <div>
+                <span class="step">Wagon wheel</span>
+                <h2>Manual wheel order</h2>
+              </div>
+            </div>
+            <div class="auction-wheel-wrap">
+              <div class="auction-wheel" id="auctionWheel"></div>
+              <div class="auction-wheel-caption">
+                <div><strong>Current spotlight</strong><p id="auctionWheelCaption">Ryzen • 9L</p></div>
+                <div><strong>Wheel order</strong><p>Sorted by admin-ready order</p></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card auction-panel">
+            <div class="card-head auction-panel-head">
+              <div>
+                <span class="step">Auction players</span>
+                <h2>Player list and sale status</h2>
+              </div>
+            </div>
+            <div class="table-wrap auction-table-wrap">
+              <table class="auction-table">
+                <thead>
+                  <tr>
+                    <th>Photo</th>
+                    <th>Player</th>
+                    <th>Base</th>
+                    <th>Purchased</th>
+                    <th>Status</th>
+                    <th>Sold to</th>
+                  </tr>
+                </thead>
+                <tbody id="auctionPlayerTable"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+        <aside class="auction-right-column">
+          <article class="card auction-panel">
+            <div class="card-head auction-panel-head">
+              <div>
+                <span class="step">Live status</span>
+                <h2>Current auction player</h2>
+              </div>
+            </div>
+            <div class="auction-current-card" id="auctionCurrentCard"></div>
+          </article>
+
+          <article class="card auction-panel">
+            <div class="card-head auction-panel-head">
+              <div>
+                <span class="step">Purchased players</span>
+                <h2>Team rosters and spend</h2>
+              </div>
+            </div>
+            <div class="auction-purchased-list" id="auctionPurchasedTeams"></div>
+          </article>
+
+          <article class="card auction-panel">
+            <div class="card-head auction-panel-head">
+              <div>
+                <span class="step">Auction rules</span>
+                <h2>Quick rules</h2>
+              </div>
+            </div>
+            <ul class="auction-rules" id="auctionRules"></ul>
+          </article>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./auction.js?v=6" type="module"></script>
+  </body>
+</html>

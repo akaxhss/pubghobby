@@ -12,6 +12,10 @@ const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, 'public');
+const storageDir = path.join(__dirname, 'storage');
+const auctionPlayersFile = path.join(storageDir, 'auction-players.json');
+const auctionTeamsFile = path.join(storageDir, 'auction-teams.json');
+const mediaDir = path.join(publicDir, 'media');
 const port = Number(process.env.PORT || 3000);
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -53,11 +57,188 @@ const skills = [
   'Game Sense'
 ];
 
+const defaultAuctionPlayers = [
+  { name: 'Skull', basePoint: 9, wheelOrder: 1, status: 'sold', soldTo: 'Valky Team', purchasedPoint: 14, image: '' },
+  { name: 'Zeus', basePoint: 9, wheelOrder: 2, status: 'available', soldTo: '', purchasedPoint: null, image: '' },
+  { name: 'Evie', basePoint: 7, wheelOrder: 3, status: 'sold', soldTo: 'Qatar Team', purchasedPoint: 8, image: '' },
+  { name: 'Joby', basePoint: 7, wheelOrder: 4, status: 'available', soldTo: '', purchasedPoint: null, image: '' },
+  { name: 'Ryzen', basePoint: 9, wheelOrder: 5, status: 'current', soldTo: 'Qatar Team', purchasedPoint: 15, image: '' },
+  { name: 'Good Morning', basePoint: 7, wheelOrder: 6, status: 'sold', soldTo: 'Akash Team', purchasedPoint: 10, image: '' },
+  { name: 'Sensi', basePoint: 7, wheelOrder: 7, status: 'available', soldTo: '', purchasedPoint: null, image: '' },
+  { name: 'Valak', basePoint: 7, wheelOrder: 8, status: 'available', soldTo: '', purchasedPoint: null, image: '' },
+  { name: 'Beast', basePoint: 6, wheelOrder: 9, status: 'available', soldTo: '', purchasedPoint: null, image: '' },
+  { name: 'Dsp', basePoint: 6, wheelOrder: 10, status: 'available', soldTo: '', purchasedPoint: null, image: '' },
+  { name: 'Soul', basePoint: 6, wheelOrder: 11, status: 'available', soldTo: '', purchasedPoint: null, image: '' },
+];
+
+const defaultAuctionTeams = [
+  {
+    name: 'Qatar Team',
+    captainName: 'Qatar',
+    totalPoints: 50,
+    purchasePoints: 23,
+    remainingPoints: 27,
+    players: [
+      { name: 'Ryzen', price: 15 },
+      { name: 'Evie', price: 8 }
+    ]
+  },
+  {
+    name: 'Valky Team',
+    captainName: 'Valky',
+    totalPoints: 50,
+    purchasePoints: 14,
+    remainingPoints: 36,
+    players: [{ name: 'Skull', price: 14 }]
+  },
+  {
+    name: 'Akash Team',
+    captainName: 'Akash',
+    totalPoints: 50,
+    purchasePoints: 10,
+    remainingPoints: 40,
+    players: [{ name: 'Good Morning', price: 10 }]
+  }
+];
+
+function cloneAuctionTeams(teamsList) {
+  return teamsList.map((team) => ({
+    ...team,
+    players: (team.players || []).map((p) => ({ ...p }))
+  }));
+}
+
+function getDefaultAuctionTeams() {
+  return cloneAuctionTeams(defaultAuctionTeams);
+}
+
+function readStoredAuctionTeams() {
+  try {
+    if (!fs.existsSync(auctionTeamsFile)) {
+      return getDefaultAuctionTeams();
+    }
+    const raw = fs.readFileSync(auctionTeamsFile, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.length) {
+      return getDefaultAuctionTeams();
+    }
+    return parsed.map((team) => ({
+      ...team,
+      players: (team.players || []).map((p) => ({ ...p }))
+    }));
+  } catch {
+    return getDefaultAuctionTeams();
+  }
+}
+
+function writeStoredAuctionTeams(teamsList) {
+  const nextTeams = cloneAuctionTeams(teamsList);
+  fs.mkdirSync(storageDir, { recursive: true });
+  fs.writeFileSync(auctionTeamsFile, JSON.stringify(nextTeams, null, 2));
+  return nextTeams;
+}
+
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'password';
 
 async function queryDb(text, params = []) {
   return pool.query(text, params);
+}
+
+function cloneAuctionPlayers(playersList) {
+  return playersList.map((player) => ({ ...player }));
+}
+
+function getDefaultAuctionPlayers() {
+  return cloneAuctionPlayers(defaultAuctionPlayers);
+}
+
+function ensureStorageDirs() {
+  fs.mkdirSync(storageDir, { recursive: true });
+  fs.mkdirSync(mediaDir, { recursive: true });
+  if (!fs.existsSync(auctionPlayersFile)) {
+    fs.writeFileSync(auctionPlayersFile, JSON.stringify(getDefaultAuctionPlayers(), null, 2));
+  }
+  if (!fs.existsSync(auctionTeamsFile)) {
+    fs.writeFileSync(auctionTeamsFile, JSON.stringify(getDefaultAuctionTeams(), null, 2));
+  }
+}
+
+function readStoredAuctionPlayers() {
+  try {
+    if (!fs.existsSync(auctionPlayersFile)) {
+      return getDefaultAuctionPlayers();
+    }
+
+    const raw = fs.readFileSync(auctionPlayersFile, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.length) {
+      return getDefaultAuctionPlayers();
+    }
+
+    return parsed.map((player) => ({ ...player }));
+  } catch {
+    return getDefaultAuctionPlayers();
+  }
+}
+
+function writeStoredAuctionPlayers(playersList) {
+  const nextPlayers = cloneAuctionPlayers(playersList);
+  fs.mkdirSync(storageDir, { recursive: true });
+  fs.writeFileSync(auctionPlayersFile, JSON.stringify(nextPlayers, null, 2));
+  return nextPlayers;
+}
+
+function parseDataUrl(dataUrl) {
+  const match = /^data:([^;]+);base64,(.+)$/i.exec(String(dataUrl ?? '').trim());
+  if (!match) return null;
+
+  const mimeType = match[1].toLowerCase();
+  const buffer = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
+  if (!buffer.length) return null;
+
+  return { mimeType, buffer };
+}
+
+function extensionFromMimeType(mimeType = '') {
+  const normalized = String(mimeType).toLowerCase();
+  if (normalized === 'image/jpeg' || normalized === 'image/jpg') return '.jpg';
+  if (normalized === 'image/png') return '.png';
+  if (normalized === 'image/webp') return '.webp';
+  if (normalized === 'image/gif') return '.gif';
+  if (normalized === 'image/avif') return '.avif';
+  if (normalized === 'image/svg+xml') return '.svg';
+  return '';
+}
+
+function safeBaseName(input = 'auction-player') {
+  return (
+    String(input)
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-z0-9_-]+/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase() || 'auction-player'
+  );
+}
+
+function contentTypeForFile(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  return (
+    {
+      '.html': 'text/html; charset=utf-8',
+      '.css': 'text/css; charset=utf-8',
+      '.js': 'text/javascript; charset=utf-8',
+      '.json': 'application/json; charset=utf-8',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.webp': 'image/webp',
+      '.gif': 'image/gif',
+      '.avif': 'image/avif',
+      '.svg': 'image/svg+xml'
+    }[ext] ?? 'application/octet-stream'
+  );
 }
 
 async function initDb() {
@@ -91,6 +272,8 @@ async function initDb() {
     ALTER TABLE sessions
     ADD COLUMN IF NOT EXISTS self_player TEXT NOT NULL DEFAULT '';
   `);
+
+  ensureStorageDirs();
 }
 
 function sendJson(res, statusCode, payload) {
@@ -99,7 +282,7 @@ function sendJson(res, statusCode, payload) {
     'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id'
+    'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id, Authorization'
   });
   res.end(JSON.stringify(payload));
 }
@@ -267,7 +450,7 @@ async function handleApi(req, res, url) {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id'
+      'Access-Control-Allow-Headers': 'Content-Type, X-Client-Id, Authorization'
     });
     res.end();
     return true;
@@ -281,6 +464,86 @@ async function handleApi(req, res, url) {
       reservedPlayers: await getReservedPlayers(),
       databaseConfigured: true
     });
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/auction/players') {
+    const fileExists = fs.existsSync(auctionPlayersFile);
+    return sendJson(res, 200, {
+      players: readStoredAuctionPlayers(),
+      updatedAtMs: fileExists ? fs.statSync(auctionPlayersFile).mtimeMs : 0
+    });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/auction/players') {
+    if (!isAdminAuthorized(req)) {
+      return sendJson(res, 401, { error: 'Admin login required.' });
+    }
+
+    const body = await readJsonBody(req);
+    if (!Array.isArray(body?.players)) {
+      return sendJson(res, 400, { error: 'players array is required.' });
+    }
+
+    try {
+      const saved = writeStoredAuctionPlayers(body.players);
+      return sendJson(res, 200, { saved: true, players: saved });
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message || 'Failed to save players.' });
+    }
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/auction/teams') {
+    const fileExists = fs.existsSync(auctionTeamsFile);
+    return sendJson(res, 200, {
+      teams: readStoredAuctionTeams(),
+      updatedAtMs: fileExists ? fs.statSync(auctionTeamsFile).mtimeMs : 0
+    });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/auction/teams') {
+    if (!isAdminAuthorized(req)) {
+      return sendJson(res, 401, { error: 'Admin login required.' });
+    }
+
+    const body = await readJsonBody(req);
+    if (!Array.isArray(body?.teams)) {
+      return sendJson(res, 400, { error: 'teams array is required.' });
+    }
+
+    try {
+      const saved = writeStoredAuctionTeams(body.teams);
+      return sendJson(res, 200, { saved: true, teams: saved });
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message || 'Failed to save teams.' });
+    }
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/media/upload') {
+    const body = await readJsonBody(req);
+    const dataUrl = String(body?.dataUrl ?? '').trim();
+    const filename = String(body?.filename ?? 'auction-image').trim();
+    const parsed = parseDataUrl(dataUrl);
+
+    if (!parsed) {
+      return sendJson(res, 400, { error: 'A valid image data URL is required.' });
+    }
+
+    const extension = extensionFromMimeType(parsed.mimeType) || path.extname(filename).toLowerCase() || '.png';
+    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const fileName = `${safeBaseName(filename)}-${uniqueSuffix}${extension}`;
+    const filePath = path.join(mediaDir, fileName);
+
+    try {
+      fs.mkdirSync(mediaDir, { recursive: true });
+      fs.writeFileSync(filePath, parsed.buffer);
+      return sendJson(res, 200, {
+        saved: true,
+        url: `/media/${fileName}`,
+        fileName
+      });
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message || 'Failed to save image.' });
+    }
   }
 
   if (req.method === 'POST' && url.pathname === '/api/sessions') {
@@ -556,7 +819,7 @@ function readJsonBody(req) {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
-      if (body.length > 1_000_000) {
+      if (body.length > 10_000_000) {
         req.destroy();
         reject(new Error('Payload too large.'));
       }
@@ -578,6 +841,8 @@ function sendStatic(req, res, url) {
     url.pathname === '/' ? '/index.html' :
     url.pathname === '/rater' ? '/rater.html' :
     url.pathname === '/tourney' ? '/tourney.html' :
+    url.pathname === '/auction' ? '/auction.html' :
+    url.pathname === '/auctionadmin' ? '/auctionadmin.html' :
     url.pathname === '/admin' ? '/admin.html' :
     url.pathname === '/results' ? '/results.html' :
     url.pathname;
@@ -590,14 +855,7 @@ function sendStatic(req, res, url) {
     return sendText(res, 404, 'Not found');
   }
 
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType =
-    {
-      '.html': 'text/html; charset=utf-8',
-      '.css': 'text/css; charset=utf-8',
-      '.js': 'text/javascript; charset=utf-8',
-      '.json': 'application/json; charset=utf-8'
-    }[ext] ?? 'application/octet-stream';
+  const contentType = contentTypeForFile(filePath);
 
   res.writeHead(200, {
     'Content-Type': contentType,

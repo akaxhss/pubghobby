@@ -1,0 +1,135 @@
+[
+  {
+    "name": "Skull",
+    "basePoint": 9,
+    "wheelOrder": null,
+    "status": "sold",
+    "soldTo": "Valky Team",
+    "purchasedPoint": 14,
+    "image": "",
+    "currentBid": 14
+  },
+  {
+    "name": "Zeus",
+    "basePoint": 9,
+    "wheelOrder": null,
+    "status": "available",
+    "soldTo": "",
+    "purchasedPoint": null,
+    "image": "/media/file_00000000c09471fa9c0f1687b6ebc98f-1782040640910-t0t2bjvp.png",
+    "currentBid": 9,
+    "isReserved": false
+  },
+  {
+    "name": "Evie",
+    "basePoint": 7,
+    "wheelOrder": null,
+    "status": "sold",
+    "soldTo": "Qatar Team",
+    "purchasedPoint": 8,
+    "image": "",
+    "currentBid": 8
+  },
+  {
+    "name": "Joby",
+    "basePoint": 7,
+    "wheelOrder": null,
+    "status": "available",
+    "soldTo": "",
+    "purchasedPoint": null,
+    "image": "/media/whatsapp-image-2026-06-20-at-23-46-18-1782041453417-00s06qwk.jpg",
+    "currentBid": 7
+  },
+  {
+    "name": "Ryzen",
+    "basePoint": 9,
+    "wheelOrder": null,
+    "status": "sold",
+    "soldTo": "Akash Team",
+    "purchasedPoint": 20,
+    "image": "",
+    "currentBid": 20
+  },
+  {
+    "name": "Good Morning",
+    "basePoint": 7,
+    "wheelOrder": null,
+    "status": "sold",
+    "soldTo": "Akash Team",
+    "purchasedPoint": 10,
+    "image": "",
+    "currentBid": 10
+  },
+  {
+    "name": "Sensi",
+    "basePoint": 7,
+    "wheelOrder": null,
+    "status": "sold",
+    "soldTo": "Raid Team",
+    "purchasedPoint": 7,
+    "image": "",
+    "currentBid": 7
+  },
+  {
+    "name": "Valak",
+    "basePoint": 7,
+    "wheelOrder": null,
+    "status": "available",
+    "soldTo": "",
+    "purchasedPoint": null,
+    "image": "",
+    "currentBid": 7
+  },
+  {
+    "name": "Beast",
+    "basePoint": 6,
+    "wheelOrder": null,
+    "status": "sold",
+    "soldTo": "",
+    "purchasedPoint": 12,
+    "image": "",
+    "currentBid": 6,
+    "isReserved": false
+  },
+  {
+    "name": "Dsp",
+    "basePoint": 6,
+    "wheelOrder": null,
+    "status": "available",
+    "soldTo": "",
+    "purchasedPoint": null,
+    "image": "",
+    "currentBid": 6
+  },
+  {
+    "name": "Soul",
+    "basePoint": 6,
+    "wheelOrder": null,
+    "status": "available",
+    "soldTo": "",
+    "purchasedPoint": null,
+    "image": "",
+    "currentBid": 6,
+    "isReserved": false
+  },
+  {
+    "name": "Good Evening",
+    "basePoint": 6,
+    "wheelOrder": null,
+    "status": "available",
+    "soldTo": "",
+    "purchasedPoint": null,
+    "image": "",
+    "currentBid": 6
+  },
+  {
+    "name": "Hyper",
+    "basePoint": 7,
+    "purchasedPoint": null,
+    "image": "",
+    "status": "available",
+    "wheelOrder": null,
+    "soldTo": "",
+    "currentBid": 7
+  }
+]

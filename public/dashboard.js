@@ -239,7 +239,7 @@ function renderLeaderboard(leaderboard, matches, teams) {
   if (!leaderboard.length) {
     els.leaderboardList.innerHTML = `
       <tr>
-        <td colspan="7" class="text-center muted" style="padding: 40px 0;">
+        <td colspan="9" class="text-center muted" style="padding: 40px 0;">
           No leaderboard statistics available. Execute matches in the hub to populate standings.
         </td>
       </tr>
@@ -273,7 +273,9 @@ function renderLeaderboard(leaderboard, matches, teams) {
         </div>
       </td>
       <td class="text-center font-numeric">${entry.played}</td>
-      <td class="text-center font-numeric font-dim">${entry.wins}-${entry.draws}-${entry.losses}</td>
+      <td class="text-center font-numeric font-bold">${entry.wins}</td>
+      <td class="text-center font-numeric font-dim">${entry.draws}</td>
+      <td class="text-center font-numeric font-bold">${entry.losses}</td>
       <td class="text-center font-numeric ${diffClass}">${diffSign}${diff}</td>
       <td class="text-center">
         <canvas class="sparkline-canvas" style="width: 80px; height: 24px;" data-team-id="${entry.team.id}"></canvas>
@@ -586,7 +588,7 @@ function renderDashboard(data) {
     setText(els.featuredMode, '-');
     setText(els.featuredStatus, '-');
     
-    if (els.leaderboardList) els.leaderboardList.innerHTML = '<tr><td colspan="7" class="text-center muted">No tournament active.</td></tr>';
+    if (els.leaderboardList) els.leaderboardList.innerHTML = '<tr><td colspan="9" class="text-center muted">No tournament active.</td></tr>';
     if (els.playerStatsList) els.playerStatsList.innerHTML = '<tr><td colspan="7" class="text-center muted">No tournament active.</td></tr>';
     if (els.matchResultsList) els.matchResultsList.innerHTML = '<div class="empty-state">No active tournament.</div>';
     if (els.recentActivityList) els.recentActivityList.innerHTML = '<div class="empty-state">No active tournament.</div>';
@@ -629,7 +631,7 @@ async function boot() {
     console.error('Error during boot:', error);
     setText(els.featuredTournamentName, 'System Offline');
     setText(els.featuredTournamentNotes, `Error details: ${error.message}`);
-    if (els.leaderboardList) els.leaderboardList.innerHTML = `<tr><td colspan="7" class="text-center bad-text">${escapeHtml(error.message)}</td></tr>`;
+    if (els.leaderboardList) els.leaderboardList.innerHTML = `<tr><td colspan="9" class="text-center bad-text">${escapeHtml(error.message)}</td></tr>`;
   } finally {
     setLoading(false);
   }
